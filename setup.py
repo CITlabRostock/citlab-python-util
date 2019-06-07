@@ -25,5 +25,10 @@ setup(
     author='CITlab',
     author_email='max.weidemann@uni-rostock.de, bastian.laasch@uni-rostock.de, johannes.michael@uni-rostock.de',
     install_requires=install_requires,
-    dependency_links=dependency_links
+    dependency_links=dependency_links,
+    classifiers=[
+        "Programming Language :: Python :: 3.6",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent"
+    ]
 )
