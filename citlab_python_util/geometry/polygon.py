@@ -1,6 +1,6 @@
 import math
 
-import citlab_python_util.geometry.rectangle as rectangle
+from citlab_python_util.geometry.rectangle import Rectangle
 from scipy.stats import linregress as lin_reg
 
 
@@ -70,8 +70,8 @@ class Polygon(object):
         bounds_max_x = max(self.x_points)
         bounds_max_y = max(self.y_points)
 
-        self.bounds = rectangle.Rectangle(bounds_min_x, bounds_min_y, width=bounds_max_x - bounds_min_x,
-                                          height=bounds_max_y - bounds_min_y)
+        self.bounds = Rectangle(bounds_min_x, bounds_min_y, width=bounds_max_x - bounds_min_x,
+                                height=bounds_max_y - bounds_min_y)
 
     def update_bounds(self, x, y):
         """ Resizes the bounding box to accommodate the specified coordinates.
@@ -116,7 +116,7 @@ class Polygon(object):
         :return: (Rectangle) rectangle defining the bounds of this polygon
         """
         if self.n_points == 0:
-            return rectangle.Rectangle()
+            return Rectangle()
 
         if self.bounds is None:
             self.calculate_bounds()

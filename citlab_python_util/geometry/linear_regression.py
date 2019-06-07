@@ -56,7 +56,6 @@ def solve_lin(a, y):
 
     return np.matmul(inv, rs)
 
-
 # if __name__ == '__main__':
 #     from scipy.stats import linregress
 #
