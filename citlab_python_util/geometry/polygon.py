@@ -1,7 +1,8 @@
 import math
 
 from citlab_python_util.geometry.rectangle import Rectangle
-from scipy.stats import linregress as lin_reg
+from citlab_python_util.geometry import linear_regression as lin_reg
+from citlab_python_util.math.rounding import round_to_nearest_integer
 
 
 class Polygon(object):
@@ -156,7 +157,7 @@ def blow_up(polygon):
                     xn = x1 + j
                 else:
                     xn = x1 - j
-                yn = int(round(y1 + (xn - x1) * (y2 - y1) / (x2 - x1)))
+                yn = int(round_to_nearest_integer(y1 + (xn - x1) * (y2 - y1) / (x2 - x1)))
                 res.add_point(xn, yn)
         else:
             for j in range(1, diff_y, 1):
@@ -164,7 +165,7 @@ def blow_up(polygon):
                     yn = y1 + j
                 else:
                     yn = y1 - j
-                xn = int(round(x1 + (yn - y1) * (x2 - x1) / (y2 - y1)))
+                xn = int(round_to_nearest_integer(x1 + (yn - y1) * (x2 - x1) / (y2 - y1)))
                 res.add_point(xn, yn)
         if i == polygon.n_points - 1:
             res.add_point(x2, y2)
