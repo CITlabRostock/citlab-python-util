@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 from codecs import open
 
 __version__ = '0.0.1'
@@ -16,6 +16,8 @@ with open('requirements.txt', encoding='utf-8') as f:
 
 install_requires = [x.strip() for x in all_reqs]
 
+ext_modules = [Extension('citlab_python_util.external.java', ['Util.class'], language='java')]
+
 setup(
     name='citlab_python_util',
     version=__version__,
@@ -27,6 +29,7 @@ setup(
     author='CITlab',
     author_email='max.weidemann@uni-rostock.de, bastian.laasch@uni-rostock.de, johannes.michael@uni-rostock.de',
     install_requires=install_requires,
+    ext_modules=ext_modules,
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: Apache Software License",
