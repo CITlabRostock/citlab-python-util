@@ -8,7 +8,7 @@ __pycache__/
 
 # Java extensions
 *.java
-*.class
+# *.class
 
 # PyCharm's ".idea folder"
 .idea/

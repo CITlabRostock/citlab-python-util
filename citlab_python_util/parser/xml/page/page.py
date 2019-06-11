@@ -12,8 +12,8 @@ from citlab_python_util.parser.xml.page.page_objects import *
 # Make sure that the css parser for the custom attribute doesn't spam "WARNING Property: Unknown Property name."
 cssutils.log.setLevel(logging.ERROR)
 
-logging.basicConfig(filename="./test/resources/Page.log",
-                    format="%(asctime)s:%(levelname)s:%(message)s")  # add filemode="w" to overwrite file
+logging.basicConfig(filename="docs/Page.log",
+                    format="%(asctime)s:%(levelname)s:%(message)s", filemode="w")  # add filemode="w" to overwrite file
 
 
 class PageXmlException(Exception):
