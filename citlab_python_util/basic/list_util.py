@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Hashable
 
 
 def filter_by_attribute(lst, attr):
@@ -16,12 +16,12 @@ def filter_by_attribute(lst, attr):
         if not hasattr(el, attr):
             raise ValueError("At least one item in the list doesn't have the requested attribute.")
         key = getattr(el, attr)
-        try:
-            d[key].append(el)
-        except TypeError:
-            if type(key) == set:
-                key = list(key)
-                d[key].append(el)
+        if not isinstance(key, Hashable):
+            if len(key) == 1:
+                key = key[0]
+            else:
+                raise TypeError('Key must be hashable.')
+        d[key].append(el)
 
     return dict(d)
 
