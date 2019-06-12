@@ -20,7 +20,7 @@ def filter_by_attribute(lst, attr):
             if len(key) == 1:
                 key = next(iter(key))
             else:
-                raise TypeError('Key must be hashable.')
+                raise TypeError(f'Key must be hashable, but got {key} of type {type(key)}.')
         d[key].append(el)
 
     return dict(d)
