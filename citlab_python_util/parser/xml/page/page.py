@@ -418,7 +418,6 @@ class Page:
             img_width, img_height = self.get_image_resolution()
 
             ps_coords = [(0, 0), (img_width, 0), (img_width, img_height), (0, img_height)]
-            print(ps_coords)
 
         else:
             ps_nd = ps_nd[0]
