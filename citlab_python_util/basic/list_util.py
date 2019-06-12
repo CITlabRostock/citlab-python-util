@@ -16,7 +16,12 @@ def filter_by_attribute(lst, attr):
         if not hasattr(el, attr):
             raise ValueError("At least one item in the list doesn't have the requested attribute.")
         key = getattr(el, attr)
-        d[key].append(el)
+        try:
+            d[key].append(el)
+        except TypeError:
+            if type(key) == set:
+                key = list(key)
+                d[key].append(el)
 
     return dict(d)
 
