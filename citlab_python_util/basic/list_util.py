@@ -19,8 +19,10 @@ def filter_by_attribute(lst, attr):
         if not isinstance(key, Hashable):
             if len(key) == 1:
                 key = next(iter(key))
+            elif len(key) == 0:
+                key = "blank"
             else:
-                raise TypeError(f'Key must be hashable, but got {key} of type {type(key)}.')
+                raise TypeError('Key must be hashable, but got {} of type {}.'.format(key, type(key)))
         d[key].append(el)
 
     return dict(d)
