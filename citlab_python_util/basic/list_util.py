@@ -18,7 +18,7 @@ def filter_by_attribute(lst, attr):
         key = getattr(el, attr)
         if not isinstance(key, Hashable):
             if len(key) == 1:
-                key = key[0]
+                key = next(iter(key))
             else:
                 raise TypeError('Key must be hashable.')
         d[key].append(el)
