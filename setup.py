@@ -23,6 +23,7 @@ setup(
     long_description=long_description,
     url='https://github.com/CITlabRostock/citlab-python-util',
     packages=find_packages(exclude=['tests', 'docs', 'examples']),
+    package_data={'citlab_python_util': ['parser/xml/page/*.xsd']},
     license='Apache License 2.0',
     author='CITlab',
     author_email='max.weidemann@uni-rostock.de, bastian.laasch@uni-rostock.de, johannes.michael@uni-rostock.de',
