@@ -11,7 +11,7 @@ class TestPolygon(TestCase):
         poly_in = Polygon([0, 3, 4, 5, 7, 5], [1, 3, 5, 3, 1, 0], 6)
         res = [(0, 1), (3, 3), (4, 5), (5, 3), (7, 1), (5, 0)]
 
-        self.assertEqual(res, poly_in.get_list_view())
+        self.assertEqual(res, poly_in.as_list())
 
     def test_translate(self):
         pass

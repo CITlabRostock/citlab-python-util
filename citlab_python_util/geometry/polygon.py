@@ -46,7 +46,7 @@ class Polygon(object):
         self.n_points = n_points
         self.bounds = None  # bounds of this polygon (Rectangle type !!!)
 
-    def get_list_view(self):
+    def as_list(self):
         return list(zip(self.x_points, self.y_points))
 
     def translate(self, delta_x, delta_y):
