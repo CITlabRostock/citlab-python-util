@@ -39,6 +39,16 @@ class Rectangle(object):
         v4 = (self.x, self.y + self.height)
         return [v1, v2, v3, v4]
 
+    def contains_point(self, point):
+        """ Check if a point is contained in this rectangle.
+
+        :param point: tuple with x- and y-coordinates
+        :return: bool, whether or not the point is contained in the rectangle
+        """
+        px = point[0]
+        py = point[1]
+        return self.x < px < self.x + self.width and self.y < py < self.y + self.height
+
     def translate(self, dx, dy):
         """ Translates this rectangle the indicated distance, to the right along the x coordinate axis, and downward
         along the y coordinate axis.

@@ -3,7 +3,7 @@ import functools
 import math
 import numpy as np
 
-from citlab_python_util.geometry.polygon import calc_reg_line_stats
+from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, norm_poly_dists
 from citlab_python_util.geometry.rectangle import Rectangle
 
 
@@ -97,12 +97,6 @@ def ortho_connect(rectangles):
         else:
             return 1
 
-    # print(points)
-    # print(sorted(points))
-    # print(sorted(points, key=lambda x: x[1]))
-    # print(sorted(sorted(points, key=lambda x: x[0]), key=lambda x: x[1]))
-    # print(sorted(points, key=functools.cmp_to_key(y_then_x)))
-
     sort_x = sorted(points)
     sort_y = sorted(points, key=functools.cmp_to_key(y_then_x))
 
@@ -128,7 +122,7 @@ def ortho_connect(rectangles):
             i += 2
 
     # Get all the polygons
-    p = []
+    all_polygons = []
     while edges_h:
         # We can start with any point
         polygon = [(edges_h.popitem()[0], 0)]
@@ -152,7 +146,7 @@ def ortho_connect(rectangles):
             if vertex in edges_v:
                 edges_v.pop(vertex)
 
-        p.append(poly)
+        all_polygons.append(poly)
 
     def point_in_poly(poly, point):
         """
@@ -188,10 +182,10 @@ def ortho_connect(rectangles):
         return False
 
     # Remove polygons contained in other polygons
-    final_polygons = p.copy()
-    if len(p) > 1:
-        for poly in p:
-            tmp_polys = p.copy()
+    final_polygons = all_polygons.copy()
+    if len(all_polygons) > 1:
+        for poly in all_polygons:
+            tmp_polys = all_polygons.copy()
             tmp_polys.remove(poly)
             # Only need to check if one point of the polygon is contained in another polygon
             # (By construction, the entire polygon is contained then)
@@ -199,6 +193,190 @@ def ortho_connect(rectangles):
                 final_polygons.remove(poly)
 
     return final_polygons
+
+
+def smooth_surrounding_polygon(polygons, poly_norm_dist=10, or_dims=(400, 800, 600, 400)):
+    """
+    Takes a list of "crooked" polygons and smooths them, by approximating vertical and horizontal edges.
+
+    1.) The polygon gets normalized, where the resulting vertices are at most `poly_norm_dist` pixels apart.
+
+    2.) For each vertex of the original polygon an orientation is determined:
+
+    2.1) Four rectangles (North, East, South, West) are generated, with the dimensions given by `or_dims`
+    (width_vertical, height_vertical, width_horizontal, height_horizontal), i.e. North and South rectangles
+    have dimensions width_v x height_v, whereas East and West rectangles have dimensions width_h x height_h.
+
+    2.2) Each rectangle counts the number of contained points from the normalized polygon
+
+    2.3) The top two rectangle counts determine the orientation of the vertex: vertical, horizontal or one
+    of the four possible corner types.
+
+    3.) Vertices with a differing orientation to its agreeing neighbours are assumed to be mislabeled and
+    get its orientation converted to its neighbours.
+
+    4.) Corner clusters of the same type need to be shrunken down to one corner, with the rest being converted
+    to verticals. (TODO or horizontals)
+
+    5.) Clusters between corners (corner-V/H-...-V/H-corner) get smoothed if they contain at least five points,
+    by taking the average over the y-coordinates for horizontal edges and the average over the x-coordinates for
+    vertical edges.
+
+    :param polygons: list of (not necessarily closed) polygons, where a polygon is represented as a list of tuples (x,y)
+    :param poly_norm_dist: int, distance between pixels in normalized polygon
+    :param or_dims: tuple (width_v, height_v, width_h, height_h), the dimensions of the orientation rectangles
+    :return: dict (keys = article_id, values = smoothed polygons)
+    """
+    # Smooth each polygon separately
+    for polygon in polygons:
+        # Normalize polygon points over surrounding polygon
+        surrounding_polygon = polygon.copy()
+        if surrounding_polygon[0] != surrounding_polygon[-1]:
+            surrounding_polygon.append(polygon[0])
+        poly_xs, poly_ys = zip(*surrounding_polygon)
+        poly = Polygon(list(poly_xs), list(poly_ys), len(poly_xs))
+        poly_norm = norm_poly_dists([poly], des_dist=poly_norm_dist)[0]
+
+        # Determine orientation for every vertex of the (original) polygon
+        oriented_points = []
+        for pt in polygon:
+            # Build up 4 rectangles in each direction (N, E, S, W)
+            width_v, height_v, width_h, height_h, = or_dims[0], or_dims[1], or_dims[2], or_dims[3]
+            pt_x = pt[0]
+            pt_y = pt[1]
+            rect_n = Rectangle(pt_x - width_v // 2, pt_y - height_v, width_v, height_v)
+            rect_s = Rectangle(pt_x - width_v // 2, pt_y, width_v, height_v)
+            rect_e = Rectangle(pt_x, pt_y - height_h // 2, width_h, height_h)
+            rect_w = Rectangle(pt_x - width_h, pt_y - height_h // 2, width_h, height_h)
+            o_rects = {'n': rect_n, 'e': rect_e, 's': rect_s, 'w': rect_w}
+
+            # Count the number of contained points from the normalized polygon in each rectangle
+            rect_counts = {'n': 0, 'e': 0, 's': 0, 'w': 0}
+            for r in o_rects:
+                for pn in zip(poly_norm.x_points, poly_norm.y_points):
+                    if o_rects[r].contains_point(pn):
+                        rect_counts[r] += 1
+
+            # Get orientation of vertex by top two rectangle counts
+            sorted_counts = sorted(rect_counts.items(), key=lambda kv: kv[1], reverse=True)
+            top_two = list(zip(*sorted_counts))[0][:2]
+            if 'n' in top_two and 's' in top_two:
+                pt_o = 'vertical'
+            elif 'e' in top_two and 'w' in top_two:
+                pt_o = 'horizontal'
+            elif 'e' in top_two and 's' in top_two:
+                pt_o = 'corner_ul'
+            elif 'w' in top_two and 's' in top_two:
+                pt_o = 'corner_ur'
+            elif 'w' in top_two and 'n' in top_two:
+                pt_o = 'corner_dr'
+            else:
+                pt_o = 'corner_dl'
+            # Append point and its orientation as a tuple
+            oriented_points.append((pt, pt_o))
+
+        # Fix wrongly classified points between two same classified ones
+        for i in range(len(oriented_points)):
+            if oriented_points[i - 1][1] != oriented_points[i][1] \
+                    and oriented_points[i - 1][1] == oriented_points[(i + 1) % len(oriented_points)][1]:
+                oriented_points[i] = (oriented_points[i][0], oriented_points[i - 1][1])
+
+        # Search for corner clusters of the same type and keep only one corner
+        # TODO: Do we need to rearrange the list to start with a corner here already?
+        # TODO: E.g. what if one of the clusters wraps around?
+        for i in range(len(oriented_points)):
+            # Found a corner
+            if 'corner' in oriented_points[i][1]:
+                # Get cluster (and IDs) with same corner type
+                corner_cluster = [(i, oriented_points[i])]
+                j = (i + 1) % len(oriented_points)
+                while oriented_points[i][1] == oriented_points[j][1]:
+                    corner_cluster.append((j, oriented_points[j]))
+                    j = (j + 1) % len(oriented_points)
+                if len(corner_cluster) > 1:
+                    # Keep corner based on type and y-coordinate
+                    corner_cluster_by_y = sorted(corner_cluster, key=lambda entry: entry[1][0][1])
+                    # TODO: Is this robust enough?
+                    # Keep corner with min y-coordinate for upper corners
+                    if 'u' in oriented_points[i][1]:
+                        cluster_to_remove = corner_cluster_by_y[1:]
+                    # Keep corner with max y-coordinate for down corners
+                    else:
+                        cluster_to_remove = corner_cluster_by_y[:-1]
+                    # Convert cluster to verticals
+                    # TODO: What about horizontals?
+                    for c in cluster_to_remove:
+                        idx = c[0]
+                        oriented_points[idx] = (oriented_points[idx][0], 'vertical')
+
+        # Rearrange oriented_points list to start with a corner and wrap it around
+        corner_idx = 0
+        for i, op in enumerate(oriented_points):
+            if 'corner' in op[1]:
+                corner_idx = i
+                break
+        oriented_points = oriented_points[corner_idx:] + oriented_points[:corner_idx]
+        oriented_points.append(oriented_points[0])
+
+        # Go through the polygon and and get all corners
+        corner_ids = []
+        for i, op in enumerate(oriented_points):
+            if 'corner' in op[1]:
+                corner_ids.append(i)
+
+        # Look at point clusters between neighboring corners
+        # Build up list of alternating x- and y-coordinates (representing rays) and build up the polygon afterwards
+        smoothed_edges = []
+        # Check if we start with a horizontal edge
+        # In this case, take the corresponding y-coordinate as the line/edge (otherwise x-coordinate)
+        o_1 = oriented_points[corner_ids[0]][1]
+        o_2 = oriented_points[corner_ids[1]][1]
+        # Two upper corners or two lower corners
+        if ('u' in o_1 and 'u' in o_2) or ('d' in o_1 and 'd' in o_2):
+            is_horizontal = True
+        # Two left or two right corners
+        elif ('r' in o_1 and 'r' in o_2) or ('l' in o_1 and 'l' in o_2):
+            is_horizontal = False
+        # Mixed corners
+        # Bigger y-gap than x-gap
+        elif math.fabs(oriented_points[corner_ids[0]][0][0] - oriented_points[corner_ids[1]][0][0]) \
+                < math.fabs(oriented_points[corner_ids[0]][0][1] - oriented_points[corner_ids[1]][0][1]):
+            is_horizontal = False
+        # Bigger x-gap than y-gap
+        else:
+            is_horizontal = True
+
+        # j is the index for the x- or y-coordinate (horizontal = y, vertical = x)
+        j = int(is_horizontal)
+        for i in range(len(corner_ids) - 1):
+            cluster = oriented_points[corner_ids[i]:corner_ids[i + 1] + 1]
+            # Approximate edges with at least 5 points (including corners)
+            if len(cluster) > 4:
+                mean = 0
+                for pt in cluster:
+                    mean += pt[0][j]
+                mean = round(float(mean) / len(cluster))
+                smoothed_edges.append(mean)
+                # Switch from x- to y-coordinate and vice versa
+                j = int(not j)
+            # Keep the rest as is, alternating between x- and y-coordinate for vertical / horizontal edges
+            else:
+                # Exclude last point so we don't overlap in the next cluster
+                for pt in cluster[:-1]:
+                    smoothed_edges.append(pt[0][j])
+                    j = int(not j)
+
+        # Go over list of x-y values and build up the polygon by taking the intersection of the rays as vertices
+        smoothed_polygons = []
+        for i in range(len(smoothed_edges)):
+            if is_horizontal:
+                smoothed_polygons.append((smoothed_edges[(i + 1) % len(smoothed_edges)], smoothed_edges[i]))
+                is_horizontal = int(not is_horizontal)
+            else:
+                smoothed_polygons.append((smoothed_edges[i], smoothed_edges[(i + 1) % len(smoothed_edges)]))
+                is_horizontal = int(not is_horizontal)
+
+        return smoothed_polygons
 
 
 def get_dist_fast(point, bb):
