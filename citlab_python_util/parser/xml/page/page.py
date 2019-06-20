@@ -424,6 +424,17 @@ class Page:
 
             # we assume that the PrintSpace is given as a rectangle, thus having four coordinates
             ps_coords = self.get_point_list(self.get_child_by_name(ps_nd, self.sCOORDS)[0].get(self.sPOINTS_ATTR))
+            for i, (x, y) in enumerate(ps_coords):
+                if x < 0:
+                    x_new = 0
+                else:
+                    x_new = x
+                if y < 0:
+                    y_new = 0
+                else:
+                    y_new = y
+                ps_coords[i] = (x_new, y_new)
+
             if len(ps_coords) != 4:
                 print(f"Expected exactly four rectangle coordinates, but got {len(ps_coords)}.")
                 exit(1)
