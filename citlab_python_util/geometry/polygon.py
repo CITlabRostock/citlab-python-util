@@ -3,6 +3,7 @@ import math
 from citlab_python_util.geometry.rectangle import Rectangle
 from citlab_python_util.geometry import linear_regression as lin_reg
 from citlab_python_util.math.rounding import round_to_nearest_integer
+from citlab_python_util.geometry.point import rescale_points
 
 
 class Polygon(object):
@@ -11,9 +12,9 @@ class Polygon(object):
         """ Constructs a new polygon.
 
         :param x_points: list of x coordinates of the polygon
-        :type x_points: list of ints
+        :type x_points: list of int
         :param y_points: list of y coordinates of the polygon
-        :type y_points: list of ints
+        :type y_points: list of int
         :param n_points: total number of points in the polygon
         :type n_points: int
         :param bounds: bounding box of the polygon in shape of a rectangle
@@ -48,6 +49,15 @@ class Polygon(object):
 
     def as_list(self):
         return list(zip(self.x_points, self.y_points))
+
+    def rescale(self, scale):
+        points_rescaled = rescale_points(self.as_list(), scale)
+        x, y = zip(*points_rescaled)
+        self.x_points = list(x)
+        self.y_points = list(y)
+
+        if self.bounds:
+            self.calculate_bounds()
 
     def translate(self, delta_x, delta_y):
         """ Translates the vertices of this polygon by delta_x along the x axis and by delta_y along the y axis.
