@@ -305,7 +305,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     if surrounding_polygon[0] != surrounding_polygon[-1]:
         surrounding_polygon.append(polygon[0])
 
-    print("--------------------------")
+    # print("--------------------------")
 
     # Normalize polygon points
     poly_xs, poly_ys = zip(*surrounding_polygon)
@@ -320,10 +320,10 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     dims_min = [100, 80, 100, 60]
     dims = [max(min(x, y), z) for x, y, z in zip(orientation_dims, dims_flex, dims_min)]
 
-    print("poly_height {}, poly_width {}".format(poly_h, poly_w))
-    print("orientation_dims ", orientation_dims)
-    print("dims_flex ", dims_flex)
-    print("dims ", dims)
+    # print("poly_height {}, poly_width {}".format(poly_h, poly_w))
+    # print("orientation_dims ", orientation_dims)
+    # print("dims_flex ", dims_flex)
+    # print("dims ", dims)
 
     # Determine orientation for every vertex of the (original) polygon
     oriented_points = []
@@ -355,7 +355,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
         # Append point and its orientation as a tuple
         oriented_points.append((pt, pt_o))
 
-        print("Type: {}, Counts: {}".format(pt_o, sorted_counts))
+        # print("Type: {}, Counts: {}".format(pt_o, sorted_counts))
 
     # Fix wrongly classified points between two same classified ones
     for i in range(len(oriented_points)):
@@ -396,13 +396,13 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     corner_idx = 0
     for i, op in enumerate(oriented_points):
         if 'corner' in op[1]:
-            print("Rearrange corner at index", i)
+            # print("Rearrange corner at index", i)
             corner_idx = i
             break
     oriented_points = oriented_points[corner_idx:] + oriented_points[:corner_idx]
     oriented_points.append(oriented_points[0])
 
-    print("oriented points, ", oriented_points)
+    # print("oriented points, ", oriented_points)
 
     # Go through the polygon and and get all corner IDs
     corner_ids = []
@@ -410,7 +410,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
         if 'corner' in op[1]:
             corner_ids.append(i)
 
-    print("corner IDs, ", corner_ids)
+    # print("corner IDs, ", corner_ids)
 
     # Look at point clusters between neighboring corners
     # Build up list of alternating x- and y-coordinates (representing rays) and build up the polygon afterwards
@@ -429,7 +429,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     # j is the index for the x- or y-coordinate (horizontal = y, vertical = x)
     j = int(is_horizontal)
 
-    print("horizontal_edge_start", is_horizontal)
+    # print("horizontal_edge_start", is_horizontal)
 
     for i in range(len(corner_ids) - 1):
         cluster = oriented_points[corner_ids[i]:corner_ids[i + 1] + 1]
@@ -438,7 +438,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
             # Plausi-Check if we're getting the correct type of edge (between corners)
             # Else, switch it and insert missing ray beforehand
             if not j == check_horizontal_edge(cluster[0][0], cluster[-1][0]):
-                print("SWITCH", i)
+                # print("SWITCH", i)
                 smoothed_edges.append(cluster[0][0][j])
                 j = int(not j)
 
@@ -454,7 +454,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
             # Plausi-Check if we're getting the correct type of edge (between first two points)
             # Else, switch it and insert missing ray beforehand
             if not j == check_horizontal_edge(cluster[0][0], cluster[1][0]):
-                print("SWITCH", i)
+                # print("SWITCH", i)
                 smoothed_edges.append(cluster[0][0][j])
                 j = int(not j)
 
@@ -463,13 +463,13 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
                 smoothed_edges.append(pt[0][j])
                 j = int(not j)
 
-        print("smoothed_edges", smoothed_edges)
+        # print("smoothed_edges", smoothed_edges)
 
         # At last step, we may need to add another ray, if the edges between last & first don't match
         if i == len(corner_ids) - 2:
             if j != is_horizontal:
                 smoothed_edges.append(cluster[-1][0][j])
-                print("smoothed_edges after last step\n", smoothed_edges)
+                # print("smoothed_edges after last step\n", smoothed_edges)
 
     # Go over list of x-y values and build up the polygon by taking the intersection of the rays as vertices
     smoothed_polygon = Polygon()
@@ -481,9 +481,143 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
             smoothed_polygon.add_point(smoothed_edges[i], smoothed_edges[(i + 1) % len(smoothed_edges)])
             is_horizontal = int(not is_horizontal)
 
-    print("polygon", smoothed_polygon)
+    # print("polygon", smoothed_polygon)
 
     return smoothed_polygon
+
+
+def bounding_box(points):
+    """
+    Computes the bounding box of a list of 2D points.
+
+    :param points: list of (x, y) tuples, representing the points
+    :return: list of four (x, y) tuples, representing the vertices of the bounding box
+    """
+    xs, ys = zip(*points)
+    x_min = min(xs)
+    x_max = max(xs)
+    y_min = min(ys)
+    y_max = max(ys)
+    return [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
+
+
+def convex_hull(points):
+    """
+    Computes the convex hull of a list of 2D points, by implementing Andrew's monotone chain algorithm.
+
+    :param points: list of (x, y) tuples, representing the points
+    :return: list of (x, y) tuples, representing the convex hull
+    """
+
+    def turn_left(p, q, r):
+        """
+        Returns `True` if the three points `p`, `q`, `r` constitute a 'left turn'.
+
+        To do so, it computes the z-coordinate of the cross product of the two vectors (pq) & (pr).
+        If the result is 0, the points are collinear. If it is positive, the three points constitute
+        a 'left turn' (counter-clockwise), otherwise a 'right turn' (clockwise).
+        """
+        return (q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1]) > 0
+
+    def x_then_y(a, b):
+        if a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]):
+            return -1
+        elif a == b:
+            return 0
+        else:
+            return 1
+
+    sorted_points = sorted(points, key=functools.cmp_to_key(x_then_y))
+
+    # Build lower hull
+    lower_hull = []
+    for pt in sorted_points:
+        while len(lower_hull) > 1 and not turn_left(lower_hull[-2], lower_hull[-1], pt):
+            lower_hull.pop()
+        lower_hull.append(pt)
+
+    # Build upper hull
+    upper_hull = []
+    for pt in reversed(sorted_points):
+        while len(upper_hull) > 1 and not turn_left(upper_hull[-2], upper_hull[-1], pt):
+            upper_hull.pop()
+        upper_hull.append(pt)
+
+    return lower_hull[:-1] + upper_hull[:-1]
+
+
+def polygon_clip(poly, clip_poly):
+    """
+    Computes the intersection of an arbitray polygon with a convex clipping polygon, by
+    implementing Sutherland-Hodgman's algorithm for polygon clipping.
+
+    :param poly: list of tuples, representing the arbitrary polygon
+    :param clip_poly: list of tuples, representing the convex clipping polygon, given in counter-clockwise order
+    :return: list of tuples, representing the intersection / clipped polygon
+    """
+    def is_inside(r, e):
+        """
+        Returns `True` if the point `r` lies on the inside of the edge `e = (p,q)`.
+
+        To do so, it computes the z-coordinate of the cross product of the two vectors `[pq]` & `[pr]`.
+        If the result is 0, the points are collinear. If it is positive, the three points constitute
+        a 'left turn' (counter-clockwise), otherwise a 'right turn' (clockwise).
+        """
+        p = e[0]
+        q = e[1]
+        return (q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1]) > 0
+
+    def compute_intersection(e1, e2):
+        """
+        Computes the intersection point of the edges `e1` & `e2`.
+        """
+        # x-y-coordinates of the four points
+        x1, y1 = e1[0][0], e1[0][1]
+        x2, y2 = e1[1][0], e1[1][1]
+        x3, y3 = e2[0][0], e2[0][1]
+        x4, y4 = e2[1][0], e2[1][1]
+        # help variables to reduce computations
+        dx12 = x1 - x2
+        dx34 = x3 - x4
+        dy12 = y1 - y2
+        dy34 = y3 - y4
+        # nominator part 1 and 2
+        n1 = x1 * y2 - y1 * x2
+        n2 = x3 * y4 - y3 * x4
+        # denominator
+        d = 1.0 / (dx12 * dy34 - dy12 * dx34)
+        # intersection point
+        return (n1 * dx34 - dx12 * n2) * d, (n1 * dy34 - dy12 * n2) * d
+
+    output_poly = poly
+    c1 = clip_poly[-1]
+    # clip poly against each edge in clip_poly
+    for c2 in clip_poly:
+        # input is the clipped output from the previous run
+        input_poly = output_poly
+        # we build the new output from scratch
+        output_poly = []
+        clip_edge = (c1, c2)
+        p1 = input_poly[-1]
+        # go over each poly edge individually
+        for p2 in input_poly:
+            poly_edge = (p1, p2)
+            # add (and implicitly remove) points depending on the four cases
+            if is_inside(p2, clip_edge):
+                if not is_inside(p1, clip_edge):
+                    output_poly.append(compute_intersection(poly_edge, clip_edge))
+                output_poly.append(p2)
+            elif is_inside(p1, clip_edge):
+                output_poly.append(compute_intersection(poly_edge, clip_edge))
+            # go to next poly edge
+            p1 = p2
+        # no intersection
+        if not output_poly:
+            return []
+        # go to next clip edge
+        c1 = c2
+
+    return output_poly
 
 
 def get_dist_fast(point, bb):

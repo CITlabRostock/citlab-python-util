@@ -16,7 +16,7 @@ from matplotlib.collections import PolyCollection
 DEFAULT_COLOR = 'k'
 
 BASECOLORS = mcolors.BASE_COLORS
-BASECOLORS.pop(DEFAULT_COLOR)
+# BASECOLORS.pop(DEFAULT_COLOR)
 COLORS = dict(BASECOLORS, **mcolors.CSS4_COLORS)
 by_hsv = sorted((tuple(mcolors.rgb_to_hsv(mcolors.to_rgba(color)[:3])), name)
                 for name, color in COLORS.items())
