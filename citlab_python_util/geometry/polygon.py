@@ -136,7 +136,7 @@ class Polygon(object):
             self.calculate_bounds()
 
         return self.bounds.get_bounds()
-    
+
     def contains_point(self, point):
         """
         Check if point is contained in polygon.
@@ -156,7 +156,7 @@ class Polygon(object):
         for i in range(self.n_points):
             if (self.y_points[i] > point_y) is not (self.y_points[i - 1] > point_y):
                 if point_x < (self.x_points[i - 1] - self.x_points[i]) * (point_y - self.y_points[i]) / \
-                   (self.y_points[i - 1] - self.y_points[i]) + self.x_points[i]:
+                        (self.y_points[i - 1] - self.y_points[i]) + self.x_points[i]:
                     is_inside = not is_inside
         return is_inside
 
@@ -355,3 +355,23 @@ def poly_to_string(polygon):
         res += str(x) + "," + str(y)
 
     return res
+
+
+def sort_by_x(polys):
+    """ Sorts a list of polygons according to their x-values.
+
+    :param polys: list of polygons given by a list of (x,y) tuples.
+    :type polys: list of (list of (int, int))
+    :return: sorted list of polygons given by a list of (x,y) tuples.
+    """
+    return sorted(polys, key=lambda poly: min(poly, key=lambda point: point[0])[0])
+
+
+def sort_by_y(polys):
+    """ Sorts a list of polygons according to their y-values.
+
+    :param polys: list of polygons given by a list of (x,y) tuples.
+    :type polys: list of (list of (int, int))
+    :return: sorted list of polygons given by a list of (x,y) tuples.
+    """
+    return sorted(polys, key=lambda poly: min(poly, key=lambda point: point[1])[1])
