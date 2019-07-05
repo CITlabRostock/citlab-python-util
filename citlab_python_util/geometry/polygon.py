@@ -136,6 +136,29 @@ class Polygon(object):
             self.calculate_bounds()
 
         return self.bounds.get_bounds()
+    
+    def contains_point(self, point):
+        """
+        Check if point is contained in polygon.
+        Run a semi-infinite ray horizontally (increasing x, fixed y) out from the test point,
+        and count how many edges it crosses. At each crossing, the ray switches between inside and outside.
+        This is called the Jordan curve theorem.
+        :param point: tuple with x- and y-coordinates
+        :return: bool, whether or not the point is contained in the polygon
+        """
+        # simple boundary check
+        if not self.get_bounding_box().contains_point(point):
+            return False
+
+        is_inside = False
+        point_x = point[0]
+        point_y = point[1]
+        for i in range(self.n_points):
+            if (self.y_points[i] > point_y) is not (self.y_points[i - 1] > point_y):
+                if point_x < (self.x_points[i - 1] - self.x_points[i]) * (point_y - self.y_points[i]) / \
+                   (self.y_points[i - 1] - self.y_points[i]) + self.x_points[i]:
+                    is_inside = not is_inside
+        return is_inside
 
 
 def blow_up(polygon):
