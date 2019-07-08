@@ -255,7 +255,7 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
 
     # get surrounding polygons
     textlines = page.get_textlines()
-    surr_polys = [tl.surr_p.points_list for tl in textlines if (tl and tl.surr_p.points_list)]
+    surr_polys = [tl.surr_p.points_list for tl in textlines if (tl and tl.surr_p)]
 
     # # Maximize plotting window
     # mng = plt.get_current_fig_manager()
