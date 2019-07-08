@@ -28,6 +28,12 @@ class Rectangle(object):
         """
         return Rectangle(self.x, self.y, width=self.width, height=self.height)
 
+    def set_bounds(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
     def get_vertices(self):
         """ Get the four vertices of this rectangle.
 
