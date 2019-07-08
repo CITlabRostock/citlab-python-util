@@ -1,9 +1,9 @@
 import math
 
-from citlab_python_util.geometry.rectangle import Rectangle
 from citlab_python_util.geometry import linear_regression as lin_reg
-from citlab_python_util.math.rounding import round_to_nearest_integer
 from citlab_python_util.geometry.point import rescale_points
+from citlab_python_util.geometry.rectangle import Rectangle
+from citlab_python_util.math.rounding import round_to_nearest_integer
 
 
 class Polygon(object):
@@ -357,21 +357,37 @@ def poly_to_string(polygon):
     return res
 
 
-def sort_by_x(polys):
+def get_minimal_x(poly):
+    return min(poly, key=lambda point: point[0])[0]
+
+
+def get_minimal_y(poly):
+    return min(poly, key=lambda point: point[1])[1]
+
+
+def get_maximal_x(poly):
+    return max(poly, key=lambda point: point[0])[0]
+
+
+def get_maximial_y(poly):
+    return max(poly, key=lambda point: point[1])[1]
+
+
+def sort_ascending_by_x(polys):
     """ Sorts a list of polygons according to their x-values.
 
     :param polys: list of polygons given by a list of (x,y) tuples.
     :type polys: list of (list of (int, int))
     :return: sorted list of polygons given by a list of (x,y) tuples.
     """
-    return sorted(polys, key=lambda poly: min(poly, key=lambda point: point[0])[0])
+    return sorted(polys, key=lambda poly: get_minimal_x(poly))
 
 
-def sort_by_y(polys):
+def sort_ascending_by_y(polys):
     """ Sorts a list of polygons according to their y-values.
 
     :param polys: list of polygons given by a list of (x,y) tuples.
     :type polys: list of (list of (int, int))
     :return: sorted list of polygons given by a list of (x,y) tuples.
     """
-    return sorted(polys, key=lambda poly: min(poly, key=lambda point: point[1])[1])
+    return sorted(polys, key=lambda poly: get_maximial_y(poly))
