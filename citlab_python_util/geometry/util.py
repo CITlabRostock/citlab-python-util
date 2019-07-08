@@ -6,6 +6,22 @@ from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, no
 from citlab_python_util.geometry.rectangle import Rectangle
 
 
+def merge_rectangles(rectangle_list):
+    """
+
+    :param rectangle_list:
+    :type rectangle_list: list of Rectangle
+    :return: minimal Rectangle object that holds all rectangles in rectangle_list
+    """
+
+    min_x = min(rectangle_list, key=lambda rectangle: rectangle.x).x
+    max_x = max(rectangle_list, key=lambda rectangle: rectangle.x + rectangle.width).get_vertices()[1][0]
+    min_y = min(rectangle_list, key=lambda rectangle: rectangle.y).y
+    max_y = max(rectangle_list, key=lambda rectangle: rectangle.y + rectangle.height).get_vertices()[2][1]
+
+    return Rectangle(min_x, min_y, max_x - min_x, max_y - min_y)
+
+
 def check_intersection(line_1, line_2):
     """ Checks if two line segments `line1` and `line2` intersect. If they do so, the function returns the intersection
     point as [x,y] coordinate (special case for overlapping ["inf", "inf"]), otherwise `None`.

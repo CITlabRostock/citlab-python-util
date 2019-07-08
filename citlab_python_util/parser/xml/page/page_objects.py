@@ -129,7 +129,7 @@ class TextLine:
         self.custom = custom  # custom attr holding information like article id (dict of dicts)
         self.baseline = Points(baseline) if baseline else None  # baseline of textline (Points object)
         self.text = text  # text present in the textline
-        self.surr_p = Points(surr_p)  # surrounding polygon of textline (Points object)
+        self.surr_p = Points(surr_p) if surr_p else None  # surrounding polygon of textline (Points object)
 
     def get_reading_order(self):
         try:
