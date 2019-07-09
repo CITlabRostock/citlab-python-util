@@ -357,6 +357,12 @@ def poly_to_string(polygon):
     return res
 
 
+def list_to_polygon_object(polygon_as_list):
+    x, y = zip(*polygon_as_list)
+
+    return Polygon(list(x), list(y), n_points=len(x))
+
+
 def get_minimal_x(poly):
     return min(poly, key=lambda point: point[0])[0]
 
