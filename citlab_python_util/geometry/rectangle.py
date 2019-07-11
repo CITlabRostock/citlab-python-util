@@ -55,6 +55,20 @@ class Rectangle(object):
         py = point[1]
         return self.x < px < self.x + self.width and self.y < py < self.y + self.height
 
+    def contains_point_on_boundary(self, point):
+        """ Check if a point is lying on the rectangle border.
+
+        :param point: tuple with x- and y-coordinates
+        :return: bool, whether or not the point is lying on the rectangle border
+        """
+        px = point[0]
+        py = point[1]
+
+        is_on_vertical_edge = (px == self.x or px == self.x + self.width) and self.y <= py <= self.y + self.height
+        is_on_horizontal_edge = (py == self.y or py == self.y + self.height) and self.x <= px <= self.x + self.width
+
+        return is_on_horizontal_edge and is_on_vertical_edge
+
     def translate(self, dx, dy):
         """ Translates this rectangle the indicated distance, to the right along the x coordinate axis, and downward
         along the y coordinate axis.
@@ -153,3 +167,17 @@ class Rectangle(object):
             ty2 = -sys.maxsize - 1
 
         return Rectangle(tx1, ty1, width=tx2, height=ty2)
+
+    def contains_rectangle(self, r):
+        """ Checks if the Rectangle objects contains another Rectangle object ``r``.
+
+        :param r: rectangle to check if it lies in the current Rectangle object
+        :type r: Rectangle
+        :return: True if ``r`` is contained, False otherwise.
+        """
+        vertices_r = r.get_vertices()
+        for v in vertices_r:
+            if not (self.contains_point(v) or self.contains_point_on_boundary(v)):
+                return False
+
+        return True
