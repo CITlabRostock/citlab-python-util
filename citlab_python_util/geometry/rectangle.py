@@ -205,3 +205,17 @@ class Rectangle(object):
         if self.x + self.width < r.x:
             return True
         return False
+
+    def get_gap_to(self, r):
+        intersection = self.intersection(r)
+        if intersection.width > 0 and intersection.height > 0:
+            return Rectangle(0, 0, 0, 0)
+        if intersection.width > 0:
+            return Rectangle(intersection.x, intersection.y - abs(intersection.height), intersection.width,
+                             abs(intersection.height))
+        if intersection.height > 0:
+            return Rectangle(intersection.x - abs(intersection.width), intersection.y, abs(intersection.width),
+                             intersection.height)
+        else:
+            return Rectangle(intersection.x - abs(intersection.width), intersection.y - abs(intersection.height),
+                             abs(intersection.width), abs(intersection.height))
