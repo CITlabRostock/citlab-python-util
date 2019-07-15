@@ -169,7 +169,7 @@ class Rectangle(object):
         return Rectangle(tx1, ty1, width=tx2, height=ty2)
 
     def contains_rectangle(self, r):
-        """ Checks if the Rectangle objects contains another Rectangle object ``r``.
+        """ Checks if the Rectangle object contains another Rectangle object ``r``.
 
         :param r: rectangle to check if it lies in the current Rectangle object
         :type r: Rectangle
@@ -181,3 +181,27 @@ class Rectangle(object):
                 return False
 
         return True
+
+    def lies_above_of(self, r):
+        """ Checks if the Rectangle lies above of Rectangle ``r``."""
+        if self.y + self.height < r.y:
+            return True
+        return False
+
+    def lies_below_of(self, r):
+        """ Checks if the Rectangle lies below of Rectangle ``r``."""
+        if self.y < r.y + r.height:
+            return True
+        return False
+
+    def lies_left_of(self, r):
+        """ Checks if the Rectangle lies left of Rectangle ``r``."""
+        if self.x > r.x + r.width:
+            return True
+        return False
+
+    def lies_right_of(self, r):
+        """ Checks if the Rectangle lies right of Rectangle ``r``."""
+        if self.x + self.width < r.x:
+            return True
+        return False
