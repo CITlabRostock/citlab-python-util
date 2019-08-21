@@ -9,7 +9,7 @@ def list_img_intersect(l1, l2):
     img1 = [val[0] for val in l1]
     img2 = [val[0] for val in l2]
     img_intersect = [t for t in img1 if t in img2]
-    # return images with baselines
+    # return intersection over triples
     l1_intersect = [val for val in l1 if val[0] in img_intersect]
     l2_intersect = [val for val in l2 if val[0] in img_intersect]
     res = l1_intersect + l2_intersect
@@ -48,10 +48,8 @@ if __name__ == '__main__':
         print(json.dumps(js, indent=4, sort_keys=True))
 
         # extract keywords and corresponding matches
-        # keywords = []
         kws_results = {}
         for kw in js["keywords"]:
-            # keywords.append(kw["kw"])
             kws_results[kw["kw"]] = kw["pos"]
 
         # Analyze query
