@@ -5,6 +5,7 @@ import re
 
 def list_img_intersect(l1, l2):
     # check intersection over images
+    # val contains [img, bl, line_id]
     img1 = [val[0] for val in l1]
     img2 = [val[0] for val in l2]
     img_intersect = [t for t in img1 if t in img2]
@@ -27,10 +28,11 @@ def get_imgs_from_kw(js, kw):
     image_list = []
     for pos in js[kw]:
         bl = pos["bl"]
+        line = pos["line"]
         image = pos["image"]
         image = re.sub(r"/storage", "", image)
         image = re.sub(r"/container.bin", "", image)
-        image_list.append((image, bl))
+        image_list.append((image, bl, line))
     return image_list
 
 
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     with open(args.path_to_json, "r") as json_file:
         # load json file
         js = json.load(json_file)
-        # print(json.dumps(js, indent=4, sort_keys=True))
+        print(json.dumps(js, indent=4, sort_keys=True))
 
         # extract keywords and corresponding matches
         # keywords = []
