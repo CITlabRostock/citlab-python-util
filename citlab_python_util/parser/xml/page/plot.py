@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
+import random
 import re
+
+import matplotlib.pyplot as plt
+from PIL import Image
+from matplotlib import colors as mcolors
+from matplotlib.collections import PolyCollection
 
 from citlab_python_util.geometry.polygon import Polygon
 from citlab_python_util.parser.xml.page.page import Page
-
-import random
-from PIL import Image
-import matplotlib.pyplot as plt
-
-from matplotlib import colors as mcolors
-from matplotlib.collections import PolyCollection
 
 # Use the default color (black) for the baselines belonging to no article
 DEFAULT_COLOR = 'k'
@@ -72,13 +71,14 @@ def add_image(axes, path):
         print("Can't add image to the plot. Check if '{}' is a valid path.".format(path))
 
 
-def add_polygons(axes, poly_list, color=DEFAULT_COLOR, closed=False):
+def add_polygons(axes, poly_list, color=DEFAULT_COLOR, closed=False, linewidth=1.2, alpha=1.0):
     """poly_list = [[(x1,y1), (x2,y2), ... , (xN,yN)], ... , [(u1,v1), (u2, v2), ... , (uM, vM)]]
     else if poly_list if of type Polygon convert it to that form."""
     if check_type(poly_list, [Polygon]):
         poly_list = [list(zip(poly.x_points, poly.y_points)) for poly in poly_list]
     try:
-        poly_collection = PolyCollection(poly_list, closed=closed, edgecolors=color, facecolors="None", linewidths=1.2)
+        poly_collection = PolyCollection(poly_list, closed=closed, edgecolors=color, facecolors="None",
+                                         linewidths=linewidth, alpha=alpha)
         return axes.add_collection(poly_collection)
     except ValueError:
         print(f"Could not handle the input polygon format {poly_list}")
