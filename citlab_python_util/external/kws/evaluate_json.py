@@ -158,14 +158,28 @@ if __name__ == '__main__':
             # print(f"Number of relevant images: {len(relevant_images)}\n")
             # print(json.dumps(query_results, indent=2))
 
+            result_images_paths = []
+            for dirpath, _, filenames in os.walk(path_to_query_folder):
+                result_images_paths.extend(
+                    [os.path.join(dirpath, f) for f in filenames if f.endswith(('.jpg', '.png', '.tif'))])
+
             # Create relevant images with marked hits
             for curr_img in relevant_images:
+                # Check if files for curr_img already exit
+                skip = False
+                for result_image_path in result_images_paths:
+                    if curr_img in result_image_path:
+                        print(f'Skipping image {curr_img} since the result files for query {_query} already exist.')
+                        skip = True
+                if skip:
+                    continue
+
                 # Get full path
                 for image_path in image_paths:
                     if curr_img in image_path:
                         curr_img_path = image_path
                         break
-                print(curr_img_path)
+                # print(curr_img_path)
 
                 # open corresponding PAGE file
                 page_path = get_corresponding_page_path(curr_img_path)
@@ -202,6 +216,9 @@ if __name__ == '__main__':
                                 break
                             # Write Text of Baseline Cluster to the text file
                             with open(os.path.join(path_to_query_folder, curr_img + ".txt"), 'a') as text_file:
+                                text_file.write(f"HIT FOR TEXTLINE WITH TEXT '{relevant_textline.text}' AND ID"
+                                                f" '{relevant_textline.id}' WITH A CONFIDENCE VALUE OF {conf}.\n")
+                                text_file.write(f"CORRESPONDING BASELINE CLUSTER:\n\n")
                                 for textline in textlines:
                                     if textline.text:
                                         text_file.write(textline.text + "\n")
@@ -222,8 +239,8 @@ if __name__ == '__main__':
                 fig.savefig(os.path.join(path_to_query_folder, img_name_conf), bbox_inches='tight', pad_inches=0,
                             dpi=1000)
 
+                fig.clear()
+                plt.close(fig)
+
                 os.rename(os.path.join(path_to_query_folder, curr_img + ".txt"),
                           os.path.join(path_to_query_folder, text_name_conf))
-
-        # TODO: Write output textfile with [query, matching images, corresponding transcription (of lines or
-        # TODO: baseline clusters)], optionally (maybe via --debug parameter?) display images with overlaid rectangle
