@@ -340,7 +340,9 @@ class Page:
         text = cls.get_child_by_name(textequiv[0], "Unicode")
         if not text:
             return ''
-        return text[0].text
+        # TODO: Maybe replace by getting the first entry of just one hierarchy below,
+        #  e.g.for TextLine ignoring the Word data
+        return text[-1].text
 
     @staticmethod
     def make_text(nd):
