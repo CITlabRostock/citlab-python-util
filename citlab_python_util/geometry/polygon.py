@@ -397,3 +397,21 @@ def sort_ascending_by_y(polys):
     :return: sorted list of polygons given by a list of (x,y) tuples.
     """
     return sorted(polys, key=lambda poly: get_maximial_y(poly))
+
+
+def are_vertical_aligned(line1, line2, margin=20):
+    line1_min_x = min(line1, key=lambda point: point[0])[0]
+    line1_max_x = max(line1, key=lambda point: point[0])[0]
+    line2_min_x = min(line2, key=lambda point: point[0])[0]
+    line2_max_x = max(line2, key=lambda point: point[0])[0]
+
+    if line2_min_x - margin <= line1_min_x <= line2_max_x and line2_min_x <= line1_max_x <= line2_max_x + margin:
+        return True
+
+    if line1_min_x - margin <= line2_min_x <= line1_max_x and line1_min_x <= line2_max_x <= line1_max_x + margin:
+        return True
+
+    if line1_min_x - margin < line2_min_x < line1_min_x + margin or line1_max_x - margin < line2_max_x < line1_max_x + margin:
+        return True
+
+    return False
