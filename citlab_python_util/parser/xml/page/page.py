@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-import os
 import datetime
 import logging
+import os
+from argparse import ArgumentParser
 
 import cssutils
 from lxml import etree
-from argparse import ArgumentParser
 
 from citlab_python_util.parser.xml.page.page_objects import *
 
 # Make sure that the css parser for the custom attribute doesn't spam "WARNING Property: Unknown Property name."
 cssutils.log.setLevel(logging.ERROR)
 
-# logging.basicConfig(filename="docs/Page.log",
+# logger.basicConfig(filename="docs/Page.log",
 #                     format="%(asctime)s:%(levelname)s:%(message)s", filemode="w")  # add filemode="w" to overwrite file
-logging.basicConfig()
+logger = logging.getLogger("Page")
 
 
 class PageXmlException(Exception):
@@ -73,7 +73,7 @@ class Page:
                 self.create_metadata(self.sCREATOR, comments="Metadata entry was missing, added..")
 
         if not self.validate(self.page_doc):
-            logging.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
+            logger.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
             # exit(1)
         self.metadata = self.get_metadata()
         self.textlines = self.get_textlines()
@@ -95,7 +95,7 @@ class Page:
         log = self.cachedValidationContext.error_log
 
         if not b_valid:
-            logging.warning(log)
+            logger.warning(log)
         return b_valid
 
     @classmethod
@@ -563,7 +563,7 @@ class Page:
         """
         page_doc = etree.parse(path_to_xml, etree.XMLParser(remove_blank_text=True))
         if not self.validate(page_doc):
-            logging.warning("PageXml is not valid according to the Page schema definition {}.".format(self.XSILOCATION))
+            logger.warning("PageXml is not valid according to the Page schema definition {}.".format(self.XSILOCATION))
 
         return page_doc
 
