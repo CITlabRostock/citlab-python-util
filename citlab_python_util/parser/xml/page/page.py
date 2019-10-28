@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-import os
 import datetime
 import logging
+import os
+from argparse import ArgumentParser
 
 import cssutils
 from lxml import etree
-from argparse import ArgumentParser
 
 from citlab_python_util.parser.xml.page.page_objects import *
 
 # Make sure that the css parser for the custom attribute doesn't spam "WARNING Property: Unknown Property name."
 cssutils.log.setLevel(logging.ERROR)
 
-logging.basicConfig(filename="docs/Page.log",
-                    format="%(asctime)s:%(levelname)s:%(message)s", filemode="w")  # add filemode="w" to overwrite file
+# logger.basicConfig(filename="docs/Page.log",
+#                     format="%(asctime)s:%(levelname)s:%(message)s", filemode="w")  # add filemode="w" to overwrite file
+logger = logging.getLogger("Page")
 
 
 class PageXmlException(Exception):
@@ -72,7 +73,7 @@ class Page:
                 self.create_metadata(self.sCREATOR, comments="Metadata entry was missing, added..")
 
         if not self.validate(self.page_doc):
-            logging.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
+            logger.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
             # exit(1)
         self.metadata = self.get_metadata()
         self.textlines = self.get_textlines()
@@ -94,7 +95,7 @@ class Page:
         log = self.cachedValidationContext.error_log
 
         if not b_valid:
-            logging.warning(log)
+            logger.warning(log)
         return b_valid
 
     @classmethod
@@ -337,7 +338,9 @@ class Page:
         textequiv = cls.get_child_by_name(nd, "TextEquiv")
         if not textequiv:
             return ''
-        text = cls.get_child_by_name(textequiv[0], "Unicode")
+        # TODO: Maybe replace by getting the first entry of just one hierarchy below,
+        #  e.g.for TextLine ignoring the Word data
+        text = cls.get_child_by_name(textequiv[-1], "Unicode")
         if not text:
             return ''
         return text[0].text
@@ -424,6 +427,17 @@ class Page:
 
             # we assume that the PrintSpace is given as a rectangle, thus having four coordinates
             ps_coords = self.get_point_list(self.get_child_by_name(ps_nd, self.sCOORDS)[0].get(self.sPOINTS_ATTR))
+            for i, (x, y) in enumerate(ps_coords):
+                if x < 0:
+                    x_new = 0
+                else:
+                    x_new = x
+                if y < 0:
+                    y_new = 0
+                else:
+                    y_new = y
+                ps_coords[i] = (x_new, y_new)
+
             if len(ps_coords) != 4:
                 print(f"Expected exactly four rectangle coordinates, but got {len(ps_coords)}.")
                 exit(1)
@@ -549,7 +563,7 @@ class Page:
         """
         page_doc = etree.parse(path_to_xml, etree.XMLParser(remove_blank_text=True))
         if not self.validate(page_doc):
-            logging.warning("PageXml is not valid according to the Page schema definition {}.".format(self.XSILOCATION))
+            logger.warning("PageXml is not valid according to the Page schema definition {}.".format(self.XSILOCATION))
 
         return page_doc
 

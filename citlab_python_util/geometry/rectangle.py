@@ -28,6 +28,12 @@ class Rectangle(object):
         """
         return Rectangle(self.x, self.y, width=self.width, height=self.height)
 
+    def set_bounds(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
     def get_vertices(self):
         """ Get the four vertices of this rectangle.
 
@@ -48,6 +54,20 @@ class Rectangle(object):
         px = point[0]
         py = point[1]
         return self.x < px < self.x + self.width and self.y < py < self.y + self.height
+
+    def contains_point_on_boundary(self, point):
+        """ Check if a point is lying on the rectangle border.
+
+        :param point: tuple with x- and y-coordinates
+        :return: bool, whether or not the point is lying on the rectangle border
+        """
+        px = point[0]
+        py = point[1]
+
+        is_on_vertical_edge = (px == self.x or px == self.x + self.width) and self.y <= py <= self.y + self.height
+        is_on_horizontal_edge = (py == self.y or py == self.y + self.height) and self.x <= px <= self.x + self.width
+
+        return is_on_horizontal_edge and is_on_vertical_edge
 
     def translate(self, dx, dy):
         """ Translates this rectangle the indicated distance, to the right along the x coordinate axis, and downward
@@ -147,3 +167,55 @@ class Rectangle(object):
             ty2 = -sys.maxsize - 1
 
         return Rectangle(tx1, ty1, width=tx2, height=ty2)
+
+    def contains_rectangle(self, r):
+        """ Checks if the Rectangle object contains another Rectangle object ``r``.
+
+        :param r: rectangle to check if it lies in the current Rectangle object
+        :type r: Rectangle
+        :return: True if ``r`` is contained, False otherwise.
+        """
+        vertices_r = r.get_vertices()
+        for v in vertices_r:
+            if not (self.contains_point(v) or self.contains_point_on_boundary(v)):
+                return False
+
+        return True
+
+    def lies_above_of(self, r):
+        """ Checks if the Rectangle lies above of Rectangle ``r``."""
+        if self.y + self.height < r.y:
+            return True
+        return False
+
+    def lies_below_of(self, r):
+        """ Checks if the Rectangle lies below of Rectangle ``r``."""
+        if self.y < r.y + r.height:
+            return True
+        return False
+
+    def lies_left_of(self, r):
+        """ Checks if the Rectangle lies left of Rectangle ``r``."""
+        if self.x > r.x + r.width:
+            return True
+        return False
+
+    def lies_right_of(self, r):
+        """ Checks if the Rectangle lies right of Rectangle ``r``."""
+        if self.x + self.width < r.x:
+            return True
+        return False
+
+    def get_gap_to(self, r):
+        intersection = self.intersection(r)
+        if intersection.width > 0 and intersection.height > 0:
+            return Rectangle(0, 0, 0, 0)
+        if intersection.width > 0:
+            return Rectangle(intersection.x, intersection.y - abs(intersection.height), intersection.width,
+                             abs(intersection.height))
+        if intersection.height > 0:
+            return Rectangle(intersection.x - abs(intersection.width), intersection.y, abs(intersection.width),
+                             intersection.height)
+        else:
+            return Rectangle(intersection.x - abs(intersection.width), intersection.y - abs(intersection.height),
+                             abs(intersection.width), abs(intersection.height))

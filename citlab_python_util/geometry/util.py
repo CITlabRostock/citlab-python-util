@@ -1,9 +1,26 @@
 import functools
+
 import math
 import numpy as np
 
 from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, norm_poly_dists
 from citlab_python_util.geometry.rectangle import Rectangle
+
+
+def merge_rectangles(rectangle_list):
+    """
+
+    :param rectangle_list:
+    :type rectangle_list: list of Rectangle
+    :return: minimal Rectangle object that holds all rectangles in rectangle_list
+    """
+
+    min_x = min(rectangle_list, key=lambda rectangle: rectangle.x).x
+    max_x = max(rectangle_list, key=lambda rectangle: rectangle.x + rectangle.width).get_vertices()[1][0]
+    min_y = min(rectangle_list, key=lambda rectangle: rectangle.y).y
+    max_y = max(rectangle_list, key=lambda rectangle: rectangle.y + rectangle.height).get_vertices()[2][1]
+
+    return Rectangle(min_x, min_y, max_x - min_x, max_y - min_y)
 
 
 def check_intersection(line_1, line_2):
@@ -360,8 +377,8 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     # Fix wrongly classified points between two same classified ones
     for i in range(len(oriented_points)):
         if oriented_points[i - 1][1] != oriented_points[i][1] \
-         and oriented_points[i - 1][1] == oriented_points[(i + 1) % len(oriented_points)][1] \
-         and 'corner' not in oriented_points[i - 1][1]:
+                and oriented_points[i - 1][1] == oriented_points[(i + 1) % len(oriented_points)][1] \
+                and 'corner' not in oriented_points[i - 1][1]:
             oriented_points[i] = (oriented_points[i][0], oriented_points[i - 1][1])
 
     # Search for corner clusters of the same type and keep only one corner
@@ -517,7 +534,7 @@ def convex_hull(points):
         If the result is 0, the points are collinear. If it is positive, the three points constitute
         a 'left turn' (counter-clockwise), otherwise a 'right turn' (clockwise).
         """
-        return (q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1]) > 0
+        return (q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1]) > 0
 
     def x_then_y(a, b):
         if a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]):
@@ -555,6 +572,7 @@ def polygon_clip(poly, clip_poly):
     :param clip_poly: list of tuples, representing the convex clipping polygon, given in counter-clockwise order
     :return: list of tuples, representing the intersection / clipped polygon
     """
+
     def is_inside(r, e):
         """
         Returns `True` if the point `r` lies on the inside of the edge `e = (p,q)`.
@@ -565,7 +583,7 @@ def polygon_clip(poly, clip_poly):
         """
         p = e[0]
         q = e[1]
-        return (q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1]) > 0
+        return (q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1]) > 0
 
     def compute_intersection(e1, e2):
         """

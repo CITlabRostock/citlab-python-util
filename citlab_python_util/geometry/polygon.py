@@ -1,7 +1,8 @@
 import math
 
-from citlab_python_util.geometry.rectangle import Rectangle
 from citlab_python_util.geometry import linear_regression as lin_reg
+from citlab_python_util.geometry.point import rescale_points
+from citlab_python_util.geometry.rectangle import Rectangle
 from citlab_python_util.math.rounding import round_to_nearest_integer
 
 
@@ -11,9 +12,9 @@ class Polygon(object):
         """ Constructs a new polygon.
 
         :param x_points: list of x coordinates of the polygon
-        :type x_points: list of ints
+        :type x_points: list of int
         :param y_points: list of y coordinates of the polygon
-        :type y_points: list of ints
+        :type y_points: list of int
         :param n_points: total number of points in the polygon
         :type n_points: int
         :param bounds: bounding box of the polygon in shape of a rectangle
@@ -48,6 +49,15 @@ class Polygon(object):
 
     def as_list(self):
         return list(zip(self.x_points, self.y_points))
+
+    def rescale(self, scale):
+        points_rescaled = rescale_points(self.as_list(), scale)
+        x, y = zip(*points_rescaled)
+        self.x_points = list(x)
+        self.y_points = list(y)
+
+        if self.bounds:
+            self.calculate_bounds()
 
     def translate(self, delta_x, delta_y):
         """ Translates the vertices of this polygon by delta_x along the x axis and by delta_y along the y axis.
@@ -146,7 +156,7 @@ class Polygon(object):
         for i in range(self.n_points):
             if (self.y_points[i] > point_y) is not (self.y_points[i - 1] > point_y):
                 if point_x < (self.x_points[i - 1] - self.x_points[i]) * (point_y - self.y_points[i]) / \
-                   (self.y_points[i - 1] - self.y_points[i]) + self.x_points[i]:
+                        (self.y_points[i - 1] - self.y_points[i]) + self.x_points[i]:
                     is_inside = not is_inside
         return is_inside
 
@@ -345,3 +355,63 @@ def poly_to_string(polygon):
         res += str(x) + "," + str(y)
 
     return res
+
+
+def list_to_polygon_object(polygon_as_list):
+    x, y = zip(*polygon_as_list)
+
+    return Polygon(list(x), list(y), n_points=len(x))
+
+
+def get_minimal_x(poly):
+    return min(poly, key=lambda point: point[0])[0]
+
+
+def get_minimal_y(poly):
+    return min(poly, key=lambda point: point[1])[1]
+
+
+def get_maximal_x(poly):
+    return max(poly, key=lambda point: point[0])[0]
+
+
+def get_maximial_y(poly):
+    return max(poly, key=lambda point: point[1])[1]
+
+
+def sort_ascending_by_x(polys):
+    """ Sorts a list of polygons according to their x-values.
+
+    :param polys: list of polygons given by a list of (x,y) tuples.
+    :type polys: list of (list of (int, int))
+    :return: sorted list of polygons given by a list of (x,y) tuples.
+    """
+    return sorted(polys, key=lambda poly: get_minimal_x(poly))
+
+
+def sort_ascending_by_y(polys):
+    """ Sorts a list of polygons according to their y-values.
+
+    :param polys: list of polygons given by a list of (x,y) tuples.
+    :type polys: list of (list of (int, int))
+    :return: sorted list of polygons given by a list of (x,y) tuples.
+    """
+    return sorted(polys, key=lambda poly: get_maximial_y(poly))
+
+
+def are_vertical_aligned(line1, line2, margin=20):
+    line1_min_x = min(line1, key=lambda point: point[0])[0]
+    line1_max_x = max(line1, key=lambda point: point[0])[0]
+    line2_min_x = min(line2, key=lambda point: point[0])[0]
+    line2_max_x = max(line2, key=lambda point: point[0])[0]
+
+    if line2_min_x - margin <= line1_min_x <= line2_max_x and line2_min_x <= line1_max_x <= line2_max_x + margin:
+        return True
+
+    if line1_min_x - margin <= line2_min_x <= line1_max_x and line1_min_x <= line2_max_x <= line1_max_x + margin:
+        return True
+
+    if line1_min_x - margin < line2_min_x < line1_min_x + margin or line1_max_x - margin < line2_max_x < line1_max_x + margin:
+        return True
+
+    return False
