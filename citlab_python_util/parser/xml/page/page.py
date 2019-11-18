@@ -460,8 +460,12 @@ class Page:
         tl_nds = self.get_child_by_name(self.page_doc, self.sTEXTLINE)
 
         res = []
+        tl_id_set = set()
         for tl in tl_nds:
             tl_id = tl.get("id")
+            if tl_id in tl_id_set:
+                continue
+            tl_id_set.add(tl_id)
             tl_custom_attr = self.parse_custom_attr(tl.get(self.sCUSTOM_ATTR))
             tl_text = self.get_text_equiv(tl)
             tl_bl_nd = self.get_child_by_name(tl, self.sBASELINE)
