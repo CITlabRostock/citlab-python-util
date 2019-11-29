@@ -55,11 +55,25 @@ class Page:
 
     sPOINTS_ATTR = "points"
 
-    sREGIONS = {"TextRegion": TextRegion, "ImageRegion": ImageRegion, "LineDrawingRegion": LineDrawingRegion,
-                "GraphicRegion": GraphicRegion, "TableRegion": TableRegion, "ChartRegion": ChartRegion,
-                "SeparatorRegion": SeparatorRegion, "MathsRegion": MathsRegion, "ChemRegion": ChemRegion,
-                "MusicRegion": MusicRegion, "AdvertRegion": AdvertRegion, "NoiseRegion": NoiseRegion,
-                "UnknownRegion": UnknownRegion}
+    sTEXTREGION = "TextRegion"
+    sIMAGEREGION = "ImageRegion"
+    sLINEDRAWINGREGION = "LineDrawingRegion"
+    sGRAPHICREGION = "GraphicRegion"
+    sTABLEREGION = "TableRegion"
+    sCHARTREGION = "ChartRegion"
+    sSEPARATORREGION = "SeparatorRegion"
+    sMATHSREGION = "MathsRegion"
+    sCHEMREGION = "ChemRegion"
+    sMUSICREGION = "MusicRegion"
+    sADVERTREGION = "AdvertRegion"
+    sNOISEREGION = "NoiseRegion"
+    sUNKNOWNREGION = "UnknownRegion"
+
+    REGIONS_DICT = {sTEXTREGION: TextRegion, sIMAGEREGION: ImageRegion, sLINEDRAWINGREGION: LineDrawingRegion,
+                    sGRAPHICREGION: GraphicRegion, sTABLEREGION: TableRegion, sCHARTREGION: ChartRegion,
+                    sSEPARATORREGION: SeparatorRegion, sMATHSREGION: MathsRegion, sCHEMREGION: ChemRegion,
+                    sMUSICREGION: MusicRegion, sADVERTREGION: AdvertRegion, sNOISEREGION: NoiseRegion,
+                    sUNKNOWNREGION: UnknownRegion}
 
     sEXT = ".xml"
 
@@ -444,20 +458,42 @@ class Page:
 
         return ps_coords
 
+    def get_text_regions(self):
+        text_region_nds = self.get_child_by_name(self.page_doc, self.sTEXTREGION)
+        res = []
+        if len(text_region_nds) > 0:
+            for text_region in text_region_nds:
+                text_region_id = text_region.get("id")
+                text_region_custom_attr = self.parse_custom_attr(text_region.get(self.sCUSTOM_ATTR))
+                text_region_coords = self.get_point_list(
+                    self.get_child_by_name(text_region, self.sCOORDS)[0].get(self.sPOINTS_ATTR))
+                text_region_text_lines = self.get_textlines(text_region)
+
+                tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords, text_region_text_lines)
+                res.append(tr)
+
+        return res
+
     def get_regions(self):
         res = {}
-        for r_name in self.sREGIONS.keys():
+        for r_name in self.REGIONS_DICT.keys():
+            if r_name == self.sTEXTREGION:
+                res[r_name] = self.get_text_regions()
+                continue
             r_nds = self.get_child_by_name(self.page_doc, r_name)
             if len(r_nds) > 0:
-                r_class = self.sREGIONS[r_name]
+                r_class = self.REGIONS_DICT[r_name]
                 res[r_name] = [r_class(reg.get("id"), self.parse_custom_attr(reg.get(self.sCUSTOM_ATTR)),
                                        self.get_point_list(
                                            self.get_child_by_name(reg, self.sCOORDS)[0].get(self.sPOINTS_ATTR)))
                                for reg in r_nds]
         return res
 
-    def get_textlines(self):
-        tl_nds = self.get_child_by_name(self.page_doc, self.sTEXTLINE)
+    def get_textlines(self, text_region_nd=None):
+        if text_region_nd is not None:
+            tl_nds = self.get_child_by_name(text_region_nd, self.sTEXTLINE)
+        else:
+            tl_nds = self.get_child_by_name(self.page_doc, self.sTEXTLINE)
 
         res = []
         tl_id_set = set()

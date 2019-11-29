@@ -58,8 +58,9 @@ class Region:
 
 
 class TextRegion(Region):
-    def __init__(self, _id, custom, points):
+    def __init__(self, _id, custom, points, text_lines):
         super().__init__(_id, custom, points)
+        self.text_lines = text_lines
 
 
 class ImageRegion(Region):
