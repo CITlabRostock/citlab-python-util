@@ -2,6 +2,7 @@ import functools
 
 import math
 import numpy as np
+from scipy.spatial import Delaunay
 
 from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, norm_poly_dists
 from citlab_python_util.geometry.rectangle import Rectangle
@@ -561,6 +562,99 @@ def convex_hull(points):
         upper_hull.append(pt)
 
     return lower_hull[:-1] + upper_hull[:-1]
+
+
+def alpha_shape(points, alpha, only_outer=True):
+    """
+    Computation of the alpha shape (concave hull) of a set of two dimensional points.
+
+    :param points: np.array of shape (n,2) points
+    :param alpha: alpha value (greater than 0!)
+    :param only_outer: boolean value to specify if we keep only the outer border or also inner edges
+
+    :return: sorted list of [i,j] points representing the edge vertices of the alpha-shape
+    """
+
+    def add_edge(edges, i, j):
+        """
+        Add a line between the i-th and j-th points, if not in the list already.
+        """
+        if (i, j) in edges or (j, i) in edges:
+            # already added
+            assert (j, i) in edges, "Can't go twice over same directed edge right?"
+
+            if only_outer:
+                # if both neighboring triangles are in shape, it's not a boundary edge
+                edges.remove((j, i))
+            return
+
+        edges.append((i, j))
+
+    def sort_edges(edges):
+        """
+        Sorting of the edge indices.
+        """
+        sorted_edges = [edges[0]]
+
+        while len(sorted_edges) < len(edges):
+            for edg in edges:
+                if edg[0] == sorted_edges[-1][1]:
+                    sorted_edges.append(edg)
+                    break
+
+        return sorted_edges
+
+    # algorithm needs at least four points
+    if points.shape[0] <= 3:
+        boundary_points = points.tolist()
+        boundary_points.append(boundary_points[0])
+
+        return boundary_points
+
+    tri = Delaunay(points)
+    edges = []
+
+    # loop over triangles: ia, ib, ic = indices of corner points of the triangle
+    for ia, ib, ic in tri.vertices:
+        pa = points[ia]
+        pb = points[ib]
+        pc = points[ic]
+
+        # computing radius of triangle circum circle:
+        # lengths of sides of triangle
+        a = np.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
+        b = np.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
+        c = np.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
+
+        # semi perimeter of triangle
+        s = (a + b + c) / 2.0
+
+        # area of triangle by Heron's formula
+        area = np.sqrt(s * (s - a) * (s - b) * (s - c))
+        circum_r = a * b * c / (4.0 * area)
+
+        # print("here's the radius filter: ", circum_r)
+        if circum_r < 1 / alpha:
+            add_edge(edges, ia, ib)
+            add_edge(edges, ib, ic)
+            add_edge(edges, ic, ia)
+
+    # when empty list of edges the convex hull is computed
+    # (for alpha -> infinity the alpha shape algorithm computes the convex hull)
+    if not edges:
+        print("alpha value not suitable -> convex hull is computed")
+        return alpha_shape(points, alpha=1 / 1e10, only_outer=True)
+
+    # get the edges in right order
+    sorted_edges = sort_edges(edges)
+
+    # get the edge vertices in right order
+    boundary_points = []
+    for edg in sorted_edges:
+        boundary_points.append(points[edg[0]].tolist())
+    boundary_points.append(boundary_points[0])
+
+    return boundary_points
 
 
 def polygon_clip(poly, clip_poly):
