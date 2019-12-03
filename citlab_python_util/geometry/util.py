@@ -640,7 +640,7 @@ def alpha_shape(points, alpha, only_outer=True):
             add_edge(edges, ic, ia)
 
     # when empty list of edges the convex hull is computed
-    # (for alpha -> infinity the alpha shape algorithm computes the convex hull)
+    # (for alpha -> 0 the alpha shape algorithm computes the convex hull)
     if not edges:
         print("alpha value not suitable -> convex hull is computed")
         return alpha_shape(points, alpha=1 / 1e10, only_outer=True)
