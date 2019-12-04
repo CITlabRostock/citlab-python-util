@@ -569,7 +569,7 @@ def alpha_shape(points, alpha, only_outer=True):
     Computation of the alpha shape (concave hull) of a set of two dimensional points.
 
     :param points: np.array of shape (n,2) points
-    :param alpha: alpha value (greater than 0!)
+    :param alpha: alpha value (for alpha -> infinity the algorithm computes the convex hull)
     :param only_outer: boolean value to specify if we keep only the outer border or also inner edges
 
     :return: sorted list of [i,j] points representing the edge vertices of the alpha-shape
@@ -634,16 +634,16 @@ def alpha_shape(points, alpha, only_outer=True):
         circum_r = a * b * c / (4.0 * area)
 
         # print("here's the radius filter: ", circum_r)
-        if circum_r < 1 / alpha:
+        if circum_r < alpha:
             add_edge(edges, ia, ib)
             add_edge(edges, ib, ic)
             add_edge(edges, ic, ia)
 
     # when empty list of edges the convex hull is computed
-    # (for alpha -> 0 the alpha shape algorithm computes the convex hull)
+    # (for alpha -> infinity the algorithm computes the convex hull)
     if not edges:
         print("alpha value not suitable -> convex hull is computed")
-        return alpha_shape(points, alpha=1 / 1e10, only_outer=True)
+        return alpha_shape(points, alpha=1e10, only_outer=True)
 
     # get the edges in right order
     sorted_edges = sort_edges(edges)
