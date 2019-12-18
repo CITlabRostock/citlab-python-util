@@ -164,8 +164,9 @@ class Page:
         return the Metadata DOM node
         """
         nd_metadata, nd_creator, nd_created, nd_last_change, nd_comments = self._get_metadata_nodes()
-        if nd_creator.text and nd_creator.text != creator:
-            nd_creator.text += ", modified by " + creator
+        # TODO: CHANGE nd_creator.text to something expressive/meaningful
+        # if nd_creator.text and nd_creator.text != creator and ", modified by " + creator not in nd_creator.text:
+        #     nd_creator.text += ", modified by " + creator
         # The schema seems to call for GMT date&time  (IMU)
         # ISO 8601 says:  "If the time is in UTC, add a Z directly after the time without a space. Z is the zone
         # designator for the zero UTC offset."

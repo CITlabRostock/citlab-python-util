@@ -45,6 +45,11 @@ class PagePreProcessor:
         print(f"Start deleting redundant text lines for batch {self.current_batch_idx}..")
         for i, page_object in enumerate(self.page_object_list):
             textlines = page_object.get_textlines(ignore_redundant_textlines=False)
+            if len(textlines) == 0:
+                print(
+                    f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found no text lines in page file "
+                    f"'{self.page_path_list[self.current_batch_idx][i]}'")
+                continue
 
             tl_id_dict = filter_by_attribute(textlines, "id")
             redundant_textline_count = 0
@@ -52,7 +57,7 @@ class PagePreProcessor:
                 if len(tl_list) > 1:
                     redundant_textline_count += 1
                     nds = page_object.get_child_by_id(page_object.page_doc, tl_id)
-                    for nd in nds[:1]:
+                    for nd in nds[1:]:
                         page_object.remove_page_xml_node(nd)
             print(
                 f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found {redundant_textline_count} text line ids with multiple"
