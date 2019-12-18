@@ -1,10 +1,18 @@
 import os
-from shutil import copyfile
 from pathlib import Path
+from shutil import copyfile
 
 import citlab_python_util.parser.xml.page.page as page
 from citlab_python_util.basic.list_util import filter_by_attribute
 from citlab_python_util.io import file_loader
+
+BATCH_SIZE = 10
+
+
+def batch(iterable, batch_size=1):
+    iterable_length = len(iterable)
+    for i in range(0, iterable_length, batch_size):
+        yield iterable[i:min(i + batch_size, iterable_length)]
 
 
 class PagePreProcessor:
@@ -13,14 +21,28 @@ class PagePreProcessor:
     """
 
     def __init__(self, page_path_list):
-        self.page_path_list = file_loader.load_text_file(page_path_list)
-        self.page_object_list = self.create_page_objects()
+        self.page_path_list_full = file_loader.load_text_file(page_path_list)
+        self.num_files = len(self.page_path_list_full)
+        self.page_path_list = [x for x in batch(self.page_path_list_full, BATCH_SIZE)]
+        self.current_batch_idx = 0
+        self.num_batches = len(self.page_path_list)
+        self.page_object_list = self.create_page_objects(batch_idx=self.current_batch_idx)
 
-    def create_page_objects(self):
-        return [page.Page(path_to_page) for path_to_page in self.page_path_list]
+        print(self.page_path_list_full)
+        print(self.page_path_list)
+
+    def update_current_batch_idx(self):
+        self.current_batch_idx = min(self.num_batches, self.current_batch_idx + 1)
+
+    def update_step(self):
+        self.update_current_batch_idx()
+        self.page_object_list = self.create_page_objects(self.current_batch_idx)
+
+    def create_page_objects(self, batch_idx):
+        return [page.Page(path_to_page) for path_to_page in self.page_path_list[batch_idx]]
 
     def delete_textlines_with_same_id(self):
-        print("Start deleting redundant text lines..")
+        print(f"Start deleting redundant text lines for batch {self.current_batch_idx}..")
         for i, page_object in enumerate(self.page_object_list):
             textlines = page_object.get_textlines(ignore_redundant_textlines=False)
 
@@ -33,8 +55,8 @@ class PagePreProcessor:
                     for nd in nds[:1]:
                         page_object.remove_page_xml_node(nd)
             print(
-                f"{int((i+1)/len(self.page_object_list) * 100):>3}%: Found {redundant_textline_count} text line ids with multiple"
-                f" assigned text lines in page file '{self.page_path_list[i]}'")
+                f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found {redundant_textline_count} text line ids with multiple"
+                f" assigned text lines in page file '{self.page_path_list[self.current_batch_idx][i]}'")
 
     def save_page_files(self, overwrite=False, save_folder=None):
         """
@@ -45,8 +67,8 @@ class PagePreProcessor:
         """
         common_prefix = ""
         if save_folder:
-            common_prefix = os.path.dirname(os.path.commonprefix(self.page_path_list)) + os.path.sep
-        for page_path, page_object in zip(self.page_path_list, self.page_object_list):
+            common_prefix = os.path.dirname(os.path.commonprefix(self.page_path_list_full)) + os.path.sep
+        for page_path, page_object in zip(self.page_path_list[self.current_batch_idx], self.page_object_list):
             page_path_folder = os.path.dirname(page_path)
             # abs_save_folder = os.path.abspath(save_folder)
             # abs_page_path_folder = os.path.abspath(page_path_folder)

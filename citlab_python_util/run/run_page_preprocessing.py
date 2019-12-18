@@ -22,10 +22,13 @@ if __name__ == '__main__':
                        f"\tpage_path_list: {page_path_list}\n"
                        f"\tsave_folder: {save_folder}\n"
                        f"\toverwrite: {overwrite}\n[y/n]:")
-    if user_input.upper() in ["N", "NO"]:
+    if user_input.upper() not in ["Y", "YES"]:
         print("Stopping.")
         exit(1)
 
     page_preprocessor = page_preprocessing.PagePreProcessor(page_path_list)
-    page_preprocessor.delete_textlines_with_same_id()
-    page_preprocessor.save_page_files(overwrite, save_folder)
+    for i in range(page_preprocessor.num_batches):
+        page_preprocessor.delete_textlines_with_same_id()
+        page_preprocessor.save_page_files(overwrite, save_folder)
+        if i < page_preprocessor.num_batches - 1:
+            page_preprocessor.update_step()
