@@ -28,9 +28,6 @@ class PagePreProcessor:
         self.num_batches = len(self.page_path_list)
         self.page_object_list = self.create_page_objects(batch_idx=self.current_batch_idx)
 
-        print(self.page_path_list_full)
-        print(self.page_path_list)
-
     def update_current_batch_idx(self):
         self.current_batch_idx = min(self.num_batches, self.current_batch_idx + 1)
 
