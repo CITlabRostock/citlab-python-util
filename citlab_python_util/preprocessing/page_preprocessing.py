@@ -6,7 +6,7 @@ import citlab_python_util.parser.xml.page.page as page
 from citlab_python_util.basic.list_util import filter_by_attribute
 from citlab_python_util.io import file_loader
 
-BATCH_SIZE = 10
+BATCH_SIZE = 100
 
 
 def batch(iterable, batch_size=1):
