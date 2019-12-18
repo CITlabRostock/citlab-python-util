@@ -109,7 +109,7 @@ class Page:
         log = self.cachedValidationContext.error_log
 
         if not b_valid:
-            logger.warning(log)
+            logger.debug(log)
         return b_valid
 
     @classmethod
@@ -489,7 +489,7 @@ class Page:
                                for reg in r_nds]
         return res
 
-    def get_textlines(self, text_region_nd=None):
+    def get_textlines(self, text_region_nd=None, ignore_redundant_textlines=True):
         if text_region_nd is not None:
             tl_nds = self.get_child_by_name(text_region_nd, self.sTEXTLINE)
         else:
@@ -499,7 +499,7 @@ class Page:
         tl_id_set = set()
         for tl in tl_nds:
             tl_id = tl.get("id")
-            if tl_id in tl_id_set:
+            if tl_id in tl_id_set and ignore_redundant_textlines:
                 continue
             tl_id_set.add(tl_id)
             tl_custom_attr = self.parse_custom_attr(tl.get(self.sCUSTOM_ATTR))
@@ -581,6 +581,12 @@ class Page:
         node = etree.Element('{%s}%s' % (cls.NS_PAGE_XML, node_name))
 
         return node
+
+    def remove_page_xml_node(cls, nd: etree.ElementBase):
+        """
+            remove a PageXml element
+        """
+        nd.getparent().remove(nd)
 
     def insert_page_xml_node(self, parent_nd, node_name):
         """ Add PageXml node as child node of ``parent_nd``.

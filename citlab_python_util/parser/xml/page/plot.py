@@ -404,5 +404,5 @@ if __name__ == '__main__':
     # plot_list(path_to_img_lst, path_to_hyp_lst, None, plot_article=True, force_equal_names=True)
 
     # path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/136358/ONB_aze_18950706"
-    path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/140878/ONB_krz_19330701"
+    path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
     plot_folder(path_to_folder)
