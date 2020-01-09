@@ -17,74 +17,19 @@ cssutils.log.setLevel(logging.ERROR)
 logger = logging.getLogger("Page")
 
 
-class PageXmlException(Exception):
-    pass
-
-
 class Page:
     """
     Various utilities to deal with PageXml format
     """
-    # Creators name
-    sCREATOR = "CITlab"
 
-    # Namespace for PageXml
-    NS_PAGE_XML = "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15"
-
-    NS_XSI = "http://www.w3.org/2001/XMLSchema-instance"
-    XSILOCATION = "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15 " \
-                  "http://schema.primaresearch.org/PAGE/gts/pagecontent/2013-07-15/pagecontent.xsd"
-
-    # Schema for Transkribus PageXml
-    XSL_SCHEMA_FILENAME = "pagecontent_transkribus.xsd"
-
-    # XML schema loaded once for all
-    cachedValidationContext = None
-
-    sMETADATA_ELT = "Metadata"
-    sCREATOR_ELT = "Creator"
-    sCREATED_ELT = "Created"
-    sLAST_CHANGE_ELT = "LastChange"
-    sCOMMENTS_ELT = "Comments"
-    sTranskribusMetadata_ELT = "TranskribusMetadata"
-    sPRINT_SPACE = "PrintSpace"
-    sCUSTOM_ATTR = "custom"
-    sTEXTLINE = "TextLine"
-    sBASELINE = "Baseline"
-    sCOORDS = "Coords"
-
-    sPOINTS_ATTR = "points"
-
-    sTEXTREGION = "TextRegion"
-    sIMAGEREGION = "ImageRegion"
-    sLINEDRAWINGREGION = "LineDrawingRegion"
-    sGRAPHICREGION = "GraphicRegion"
-    sTABLEREGION = "TableRegion"
-    sCHARTREGION = "ChartRegion"
-    sSEPARATORREGION = "SeparatorRegion"
-    sMATHSREGION = "MathsRegion"
-    sCHEMREGION = "ChemRegion"
-    sMUSICREGION = "MusicRegion"
-    sADVERTREGION = "AdvertRegion"
-    sNOISEREGION = "NoiseRegion"
-    sUNKNOWNREGION = "UnknownRegion"
-
-    REGIONS_DICT = {sTEXTREGION: TextRegion, sIMAGEREGION: ImageRegion, sLINEDRAWINGREGION: LineDrawingRegion,
-                    sGRAPHICREGION: GraphicRegion, sTABLEREGION: TableRegion, sCHARTREGION: ChartRegion,
-                    sSEPARATORREGION: SeparatorRegion, sMATHSREGION: MathsRegion, sCHEMREGION: ChemRegion,
-                    sMUSICREGION: MusicRegion, sADVERTREGION: AdvertRegion, sNOISEREGION: NoiseRegion,
-                    sUNKNOWNREGION: UnknownRegion}
-
-    sEXT = ".xml"
-
-    def __init__(self, path_to_xml=None, creator_name=sCREATOR, img_filename=None, img_w=None, img_h=None):
+    def __init__(self, path_to_xml=None, creator_name=page_const.sCREATOR, img_filename=None, img_w=None, img_h=None):
         self.page_doc = self.load_page_xml(path_to_xml) if path_to_xml is not None else self.create_page_xml_document(
             creator_name, img_filename, img_w, img_h)
         if len(self.page_doc.getroot().getchildren()) != 2:
             elts = self.page_doc.getroot().getchildren()
             # if Metadata node is missing, add it
-            if self.sMETADATA_ELT not in [elt.tag for elt in elts]:
-                self.create_metadata(self.sCREATOR, comments="Metadata entry was missing, added..")
+            if page_const.sMETADATA_ELT not in [elt.tag for elt in elts]:
+                self.create_metadata(page_const.sCREATOR, comments="Metadata entry was missing, added..")
 
         if not self.validate(self.page_doc):
             logger.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
@@ -100,13 +45,13 @@ class Page:
 
         Return True or False
         """
-        if not self.cachedValidationContext:
+        if not page_const.cachedValidationContext:
             schema_filename_ = self.get_schema_filename()
             xmlschema_doc = etree.parse(schema_filename_)
-            self.cachedValidationContext = etree.XMLSchema(xmlschema_doc)
+            page_const.cachedValidationContext = etree.XMLSchema(xmlschema_doc)
 
-        b_valid = self.cachedValidationContext.validate(doc)
-        log = self.cachedValidationContext.error_log
+        b_valid = page_const.cachedValidationContext.validate(doc)
+        log = page_const.cachedValidationContext.error_log
 
         if not b_valid:
             logger.debug(log)
@@ -117,7 +62,7 @@ class Page:
         """
         Return the path to the schema, built from the path of this module.
         """
-        filename = os.path.join(os.path.dirname(__file__), cls.XSL_SCHEMA_FILENAME)
+        filename = os.path.join(os.path.dirname(__file__), page_const.XSL_SCHEMA_FILENAME)
         return filename
 
     # =========== METADATA ===========
@@ -175,22 +120,22 @@ class Page:
         nd_last_change.text = datetime.datetime.utcnow().isoformat() + "Z"
         if comments is not None:
             if not nd_comments:  # we need to add one!
-                nd_comments = etree.SubElement(nd_metadata, self.sCOMMENTS_ELT)
+                nd_comments = etree.SubElement(nd_metadata, page_const.sCOMMENTS_ELT)
             nd_comments.text = comments
         return nd_metadata
 
-    def create_metadata(self, creator_name=sCREATOR, comments=None):
+    def create_metadata(self, creator_name=page_const.sCREATOR, comments=None):
         xml_page_root = self.page_doc.getroot()
 
-        metadata = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sMETADATA_ELT))
+        metadata = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sMETADATA_ELT))
         xml_page_root.insert(0, metadata)
-        creator = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sCREATOR_ELT))
+        creator = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCREATOR_ELT))
         creator.text = creator_name
-        created = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sCREATED_ELT))
+        created = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCREATED_ELT))
         created.text = datetime.datetime.utcnow().isoformat() + "Z"
-        last_change = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sLAST_CHANGE_ELT))
+        last_change = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sLAST_CHANGE_ELT))
         last_change.text = datetime.datetime.utcnow().isoformat() + "Z"
-        comments_nd = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sCOMMENTS_ELT))
+        comments_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOMMENTS_ELT))
         comments_nd.text = comments
 
         metadata.append(creator)
@@ -206,28 +151,28 @@ class Page:
         return a 4-tuple:
             DOM nodes of Metadata, Creator, Created, Last_Change, Comments (or None if no comments)
         """
-        l_nd = self.get_child_by_name(self.page_doc, self.sMETADATA_ELT)
+        l_nd = self.get_child_by_name(self.page_doc, page_const.sMETADATA_ELT)
         if len(l_nd) != 1:
             raise ValueError(
-                "PageXml should have exactly one %s node but found %s" % (self.sMETADATA_ELT, str(len(l_nd))))
+                "PageXml should have exactly one %s node but found %s" % (page_const.sMETADATA_ELT, str(len(l_nd))))
         dom_nd = l_nd[0]
-        assert etree.QName(dom_nd.tag).localname == self.sMETADATA_ELT
+        assert etree.QName(dom_nd.tag).localname == page_const.sMETADATA_ELT
         nd1 = dom_nd[0]
 
-        if etree.QName(nd1.tag).localname != self.sCREATOR_ELT:
+        if etree.QName(nd1.tag).localname != page_const.sCREATOR_ELT:
             raise ValueError("PageXMl mal-formed Metadata: Creator element must be 1st element")
 
         nd2 = nd1.getnext()
-        if etree.QName(nd2.tag).localname != self.sCREATED_ELT:
+        if etree.QName(nd2.tag).localname != page_const.sCREATED_ELT:
             raise ValueError("PageXMl mal-formed Metadata: Created element must be 2nd element")
 
         nd3 = nd2.getnext()
-        if etree.QName(nd3.tag).localname != self.sLAST_CHANGE_ELT:
+        if etree.QName(nd3.tag).localname != page_const.sLAST_CHANGE_ELT:
             raise ValueError("PageXMl mal-formed Metadata: LastChange element must be 3rd element")
 
         nd4 = nd3.getnext()
         if nd4 is not None:
-            if etree.QName(nd4.tag).localname not in [self.sCOMMENTS_ELT, self.sTranskribusMetadata_ELT]:
+            if etree.QName(nd4.tag).localname not in [page_const.sCOMMENTS_ELT, page_const.sTranskribusMetadata_ELT]:
                 raise ValueError("PageXMl mal-formed Metadata: Comments element must be 4th element")
         return dom_nd, nd1, nd2, nd3, nd4
 
@@ -240,10 +185,10 @@ class Page:
         return a DOM node
         """
         # return elt.findall(".//{%s}:%s"%(cls.NS_PAGE_XML,s_child_name))
-        return elt.xpath(".//pc:%s" % s_child_name, namespaces={"pc": cls.NS_PAGE_XML})
+        return elt.xpath(".//pc:%s" % s_child_name, namespaces={"pc": page_const.NS_PAGE_XML})
 
     def get_ancestor_by_name(self, elt, s_name):
-        return elt.xpath("ancestor::pc:%s" % s_name, namespaces={"pc": self.NS_PAGE_XML})
+        return elt.xpath("ancestor::pc:%s" % s_name, namespaces={"pc": page_const.NS_PAGE_XML})
 
     @classmethod
     def get_child_by_id(cls, elt, _id):
@@ -271,7 +216,7 @@ class Page:
         return a dictionary if no 2nd key provided, or a string if 1st and 2nd key provided
         Raise KeyError if one of the attribute does not exist
         """
-        c_node = nd.get(self.sCUSTOM_ATTR)
+        c_node = nd.get(page_const.sCUSTOM_ATTR)
         if c_node is None:
             return None
         ddic = self.parse_custom_attr(c_node)
@@ -279,7 +224,7 @@ class Page:
         # First key
 
     def set_custom_attr_from_dict(self, nd, custom_dict):
-        nd.set(self.sCUSTOM_ATTR, self.format_custom_attr(custom_dict))
+        nd.set(page_const.sCUSTOM_ATTR, page_util.format_custom_attr(custom_dict))
         return nd
 
     def set_custom_attr(self, nd, s_attr_name, s_sub_attr_name, s_val):
@@ -288,19 +233,19 @@ class Page:
         return the value
         Raise KeyError if one of the attributes does not exist
         """
-        ddic = self.parse_custom_attr(nd.get(self.sCUSTOM_ATTR))
+        ddic = self.parse_custom_attr(nd.get(page_const.sCUSTOM_ATTR))
         try:
             ddic[s_attr_name][s_sub_attr_name] = str(s_val)
         except KeyError:
             ddic[s_attr_name] = dict()
             ddic[s_attr_name][s_sub_attr_name] = str(s_val)
 
-        sddic = self.format_custom_attr(ddic)
-        nd.set(self.sCUSTOM_ATTR, sddic)
+        sddic = page_util.format_custom_attr(ddic)
+        nd.set(page_const.sCUSTOM_ATTR, sddic)
         return s_val
 
     def remove_custom_attr(self, nd, s_attr_name, s_sub_attr_name):
-        ddic = self.parse_custom_attr(nd.get(self.sCUSTOM_ATTR))
+        ddic = self.parse_custom_attr(nd.get(page_const.sCUSTOM_ATTR))
         if s_attr_name in ddic and s_sub_attr_name in ddic[s_attr_name]:
             ddic[s_attr_name].pop(s_sub_attr_name)
         else:
@@ -329,28 +274,9 @@ class Page:
 
         return custom_dict
 
-    @staticmethod
-    def format_custom_attr(ddic):
-        """
-        Format a dictionary of dictionaries in string format in the "custom attribute" syntax
-        e.g. custom="readingOrder {index:1;} structure {type:heading;}"
-        """
-        s = ""
-        for k1, d2 in ddic.items():
-            if s:
-                s += " "
-            s += "%s" % k1
-            s2 = ""
-            for k2, v2 in d2.items():
-                if s2:
-                    s2 += " "
-                s2 += "%s:%s;" % (k2, v2)
-            s += " {%s}" % s2
-        return s
-
     @classmethod
     def get_text_equiv(cls, nd):
-        textequiv = cls.get_child_by_name(nd, "TextEquiv")
+        textequiv = cls.get_child_by_name(nd, page_const.sTEXTEQUIV)
         if not textequiv:
             return ''
         # TODO: Maybe replace by getting the first entry of just one hierarchy below,
@@ -427,10 +353,10 @@ class Page:
         return img_width, img_height
 
     def get_print_space_coords(self):
-        ps_nd = self.get_child_by_name(self.page_doc, self.sPRINT_SPACE)
+        ps_nd = self.get_child_by_name(self.page_doc, page_const.sPRINT_SPACE)
 
         if len(ps_nd) != 1:
-            print(f"Expected exactly one {self.sPRINT_SPACE} node, but got {len(ps_nd)}.")
+            print(f"Expected exactly one {page_const.sPRINT_SPACE} node, but got {len(ps_nd)}.")
             # exit(1)
             print(f"Fallback to image size.")
             img_width, img_height = self.get_image_resolution()
@@ -441,7 +367,8 @@ class Page:
             ps_nd = ps_nd[0]
 
             # we assume that the PrintSpace is given as a rectangle, thus having four coordinates
-            ps_coords = self.get_point_list(self.get_child_by_name(ps_nd, self.sCOORDS)[0].get(self.sPOINTS_ATTR))
+            ps_coords = self.get_point_list(
+                self.get_child_by_name(ps_nd, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
             for i, (x, y) in enumerate(ps_coords):
                 if x < 0:
                     x_new = 0
@@ -460,14 +387,14 @@ class Page:
         return ps_coords
 
     def get_text_regions(self):
-        text_region_nds = self.get_child_by_name(self.page_doc, self.sTEXTREGION)
+        text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
         res = []
         if len(text_region_nds) > 0:
             for text_region in text_region_nds:
                 text_region_id = text_region.get("id")
-                text_region_custom_attr = self.parse_custom_attr(text_region.get(self.sCUSTOM_ATTR))
+                text_region_custom_attr = self.parse_custom_attr(text_region.get(page_const.sCUSTOM_ATTR))
                 text_region_coords = self.get_point_list(
-                    self.get_child_by_name(text_region, self.sCOORDS)[0].get(self.sPOINTS_ATTR))
+                    self.get_child_by_name(text_region, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
                 text_region_text_lines = self.get_textlines(text_region)
 
                 tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords, text_region_text_lines)
@@ -477,24 +404,25 @@ class Page:
 
     def get_regions(self):
         res = {}
-        for r_name in self.REGIONS_DICT.keys():
-            if r_name == self.sTEXTREGION:
+        for r_name in REGIONS_DICT.keys():
+            if r_name == page_const.sTEXTREGION:
                 res[r_name] = self.get_text_regions()
                 continue
             r_nds = self.get_child_by_name(self.page_doc, r_name)
             if len(r_nds) > 0:
-                r_class = self.REGIONS_DICT[r_name]
-                res[r_name] = [r_class(reg.get("id"), self.parse_custom_attr(reg.get(self.sCUSTOM_ATTR)),
+                r_class = REGIONS_DICT[r_name]
+                res[r_name] = [r_class(reg.get("id"), self.parse_custom_attr(reg.get(page_const.sCUSTOM_ATTR)),
                                        self.get_point_list(
-                                           self.get_child_by_name(reg, self.sCOORDS)[0].get(self.sPOINTS_ATTR)))
+                                           self.get_child_by_name(reg, page_const.sCOORDS)[0].get(
+                                               page_const.sPOINTS_ATTR)))
                                for reg in r_nds]
         return res
 
     def get_textlines(self, text_region_nd=None, ignore_redundant_textlines=True):
         if text_region_nd is not None:
-            tl_nds = self.get_child_by_name(text_region_nd, self.sTEXTLINE)
+            tl_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
         else:
-            tl_nds = self.get_child_by_name(self.page_doc, self.sTEXTLINE)
+            tl_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTLINE)
 
         res = []
         tl_id_set = set()
@@ -503,9 +431,9 @@ class Page:
             if tl_id in tl_id_set and ignore_redundant_textlines:
                 continue
             tl_id_set.add(tl_id)
-            tl_custom_attr = self.parse_custom_attr(tl.get(self.sCUSTOM_ATTR))
+            tl_custom_attr = self.parse_custom_attr(tl.get(page_const.sCUSTOM_ATTR))
             tl_text = self.get_text_equiv(tl)
-            tl_bl_nd = self.get_child_by_name(tl, self.sBASELINE)
+            tl_bl_nd = self.get_child_by_name(tl, page_const.sBASELINE)
             tl_bl = self.get_point_list(tl_bl_nd[0]) if tl_bl_nd else None
             tl_surr_p = self.get_point_list(tl)
             res.append(TextLine(tl_id, tl_custom_attr, tl_text, tl_bl, tl_surr_p))
@@ -540,29 +468,80 @@ class Page:
             # cls.set_custom_attr(tl_nd, "structure", "id", tl.get_article_id())
             # cls.set_custom_attr(tl_nd, "structure", "type", "article")
 
+    def set_text_regions(self, text_regions, overwrite=False):
+        # TODO: Define behaviour for overwrite=False
+        if overwrite:
+            text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
+            for text_region_nd in text_region_nds:
+                self.remove_page_xml_node(text_region_nd)
+
+        page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
+        for text_region in text_regions:
+            text_region_nd = text_region.to_page_xml_node()
+            page_nd.append(text_region_nd)
+
+    def set_text_lines(self, text_region, text_lines, overwrite=False):
+        text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)
+        current_text_line_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
+
+        if overwrite:
+            for text_line_nd in current_text_line_nds:
+                self.remove_page_xml_node(text_line_nd)
+
+        new_text = ""
+        last_text_line_nd = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
+        if last_text_line_nd:
+            last_text_line_nd = last_text_line_nd[0]
+            idx = text_region_nd.index(last_text_line_nd)
+        else:
+            idx = 0
+        for text_line in text_lines:
+            text_line_nd = text_line.to_page_xml_node()
+            new_text = "\n".join([new_text, text_line.text])
+            text_region_nd.insert(idx, text_line_nd)
+            idx += 1
+
+        unicode_nd = self.get_child_by_name(text_region_nd, page_const.sUNICODE)
+        if unicode_nd:
+            unicode_nd = unicode_nd[-1]
+            unicode_nd.text = new_text
+        else:
+            unicode_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sUNICODE))
+            unicode_nd.text = new_text
+
+            text_equiv_nd = self.get_child_by_name(text_region_nd, page_const.sTEXTEQUIV)
+            if text_equiv_nd:
+                text_equiv_nd = text_equiv_nd[0]
+                text_equiv_nd.append(unicode_nd)
+                text_region_nd.append(text_equiv_nd)
+            else:
+                text_equiv_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sTEXTEQUIV))
+                text_equiv_nd.append(unicode_nd)
+
     # =========== CREATION ===========
-    def create_page_xml_document(self, creator_name=sCREATOR, filename=None, img_w=0, img_h=0):
+    def create_page_xml_document(self, creator_name=page_const.sCREATOR, filename=None, img_w=0, img_h=0):
         """
             create a new PageXml document
         """
-        xml_page_root = etree.Element('{%s}PcGts' % self.NS_PAGE_XML,
-                                      attrib={"{" + self.NS_XSI + "}schemaLocation": self.XSILOCATION},  # schema loc.
-                                      nsmap={None: self.NS_PAGE_XML})  # Default ns
+        xml_page_root = etree.Element('{%s}PcGts' % page_const.NS_PAGE_XML,
+                                      attrib={"{" + page_const.NS_XSI + "}schemaLocation": page_const.XSILOCATION},
+                                      # schema loc.
+                                      nsmap={None: page_const.NS_PAGE_XML})  # Default ns
         self.page_doc = etree.ElementTree(xml_page_root)
 
-        metadata = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sMETADATA_ELT))
+        metadata = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sMETADATA_ELT))
         xml_page_root.append(metadata)
-        creator = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sCREATOR_ELT))
+        creator = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCREATOR_ELT))
         creator.text = creator_name
-        created = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sCREATED_ELT))
+        created = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCREATED_ELT))
         created.text = datetime.datetime.utcnow().isoformat() + "Z"
-        last_change = etree.Element('{%s}%s' % (self.NS_PAGE_XML, self.sLAST_CHANGE_ELT))
+        last_change = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sLAST_CHANGE_ELT))
         last_change.text = datetime.datetime.utcnow().isoformat() + "Z"
         metadata.append(creator)
         metadata.append(created)
         metadata.append(last_change)
 
-        page_node = etree.Element('{%s}%s' % (self.NS_PAGE_XML, 'Page'))
+        page_node = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, 'Page'))
         page_node.set('imageFilename', filename)
         page_node.set('imageWidth', str(img_w))
         page_node.set('imageHeight', str(img_h))
@@ -579,7 +558,7 @@ class Page:
         """
             create a PageXMl element
         """
-        node = etree.Element('{%s}%s' % (cls.NS_PAGE_XML, node_name))
+        node = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, node_name))
 
         return node
 
@@ -610,11 +589,12 @@ class Page:
         """
         page_doc = etree.parse(path_to_xml, etree.XMLParser(remove_blank_text=True))
         if not self.validate(page_doc):
-            logger.warning("PageXml is not valid according to the Page schema definition {}.".format(self.XSILOCATION))
+            logger.warning(
+                "PageXml is not valid according to the Page schema definition {}.".format(page_const.XSILOCATION))
 
         return page_doc
 
-    def write_page_xml(self, save_path, creator=sCREATOR, comments=None):
+    def write_page_xml(self, save_path, creator=page_const.sCREATOR, comments=None):
         """Save PageXml file to ``save_path``.
 
         @:param save_path:
@@ -660,7 +640,13 @@ if __name__ == "__main__":
 
     page = Page(flags.path_to_xml)
 
-    print(page.get_article_dict())
+    text_region = page.get_text_regions()[1]
+    print("TextRegion: ", text_region)
+    page.set_text_regions([text_region], overwrite=True)
+    new_text_region = page.get_text_regions()[0]
+    print(new_text_region.custom)
+
+    # print(page.get_article_dict())
 
     # textlines = page.get_textlines()
     # for tl in textlines:
