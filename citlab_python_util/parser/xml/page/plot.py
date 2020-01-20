@@ -46,7 +46,7 @@ COLORS = ["darkgreen", "red", "darkviolet", "darkblue",
 for color in COLORS_SORTED:
     if color not in COLORS:
         COLORS.append(color)
-
+COLORS = 5 * COLORS
 
 # Two interfaces supported by matplotlib:
 #   1. object-oriented interface using axes.Axes and figure.Figure objects
