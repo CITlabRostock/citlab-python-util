@@ -46,3 +46,24 @@ sNOISEREGION = "NoiseRegion"
 sUNKNOWNREGION = "UnknownRegion"
 
 sEXT = ".xml"
+
+
+# TextRegion Types
+class TextRegionTypes:
+    sPARAGRAPH = "paragraph"
+    sHEADING = "heading"
+    sCAPTION = "caption"
+    sHEADER = "header"
+    sFOOTER = "footer"
+    sPAGENUMBER = "page-number"
+    sDROPCAPITAL = "drop-capital"
+    sCREDIT = "credit"
+    sFLOATING = "floating"
+    sSIGNATUREMARK = "signature-mark"
+    sCATCHWORD = "catch-word"
+    sMARGINALIA = "marginalia"
+    sFOOTNOTE = "footnote"
+    sFOOTNOTECONT = "footnote-continued"
+    sENDNOTE = "endnote"
+    sTOCENTRY = "TOC-entry"
+    sOTHER = "other"

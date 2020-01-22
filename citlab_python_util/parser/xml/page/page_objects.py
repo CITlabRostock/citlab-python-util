@@ -98,14 +98,16 @@ class Region:
 
 
 class TextRegion(Region):
-    def __init__(self, _id, custom=None, points=None, text_lines=None):
+    def __init__(self, _id, custom=None, points=None, text_lines=None, region_type=page_const.TextRegionTypes.sPARAGRAPH):
         super().__init__(_id, custom, points, node_string=page_const.sTEXTREGION)
         if text_lines is None:
             text_lines = []
         self.text_lines = text_lines
+        self.region_type = region_type
 
     def to_page_xml_node(self):
         region_nd = super().to_page_xml_node()
+        region_nd.set('type', self.region_type)
         region_text = ""
 
         for text_line in self.text_lines:
