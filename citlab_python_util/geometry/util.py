@@ -631,7 +631,7 @@ def alpha_shape(points, alpha, only_outer=True):
 
         # area of triangle by Heron's formula
         area = np.sqrt(s * (s - a) * (s - b) * (s - c))
-        circum_r = a * b * c / (4.0 * area)
+        circum_r = a * b * c / (4.0 * (area + 1e-8))
 
         # print("here's the radius filter: ", circum_r)
         if circum_r < alpha:
