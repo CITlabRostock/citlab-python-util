@@ -98,7 +98,8 @@ class Region:
 
 
 class TextRegion(Region):
-    def __init__(self, _id, custom=None, points=None, text_lines=None, region_type=page_const.TextRegionTypes.sPARAGRAPH):
+    def __init__(self, _id, custom=None, points=None, text_lines=None,
+                 region_type=page_const.TextRegionTypes.sPARAGRAPH):
         super().__init__(_id, custom, points, node_string=page_const.sTEXTREGION)
         if text_lines is None:
             text_lines = []
@@ -264,6 +265,37 @@ class TextLine:
         else:
             try:
                 self.custom.pop("structure")
+            except KeyError:
+                pass
+
+
+class Word:
+    def __init__(self, _id, custom=None, text=None, surr_p=None):
+        if _id is None:
+            raise page_util.PageXmlException("Every Word must have a unique id.")
+        self.id = _id  # unique id of textline (str)
+        # dictionary of dictionaries, e.g. {'readingOrder':{ 'index':'4' },'structure':{'type':'catch-word'}}
+        self.custom = custom  # custom attr holding information like reading order (dict of dicts)
+        self.text = text if text is not None else ""  # text present in the textline
+        self.surr_p = Points(surr_p) if surr_p is not None else None  # surrounding polygon of textline (Points object)
+
+    def get_reading_order(self):
+        try:
+            return self.custom["readingOrder"]["index"]
+        except KeyError:
+            # print("Reading order index missing.")
+            return None
+
+    def set_reading_order(self, reading_order):
+        if reading_order:
+            try:
+                self.custom["readingOrder"]["index"] = str(reading_order)
+            except KeyError:
+                self.custom["readingOrder"] = {}
+                self.custom["readingOrder"]["index"] = str(reading_order)
+        else:
+            try:
+                self.custom.pop("readingOrder")
             except KeyError:
                 pass
 

@@ -115,6 +115,12 @@ def toggle_view(event, views):
             surr_poly.set_visible(not is_visible)
         plt.draw()
 
+    if event.key == 'w' and "word_polys" in views:
+        for word_poly in views["word_polys"]:
+            is_visible = word_poly.get_visible()
+            word_poly.set_visible(not is_visible)
+        plt.draw()
+
     if event.key == 'r' and "regions" in views:
         for region in views["regions"]:
             is_visible = region.get_visible()
@@ -150,7 +156,8 @@ def check_type(lst, t):
     return True
 
 
-def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_list=None, rcolors=None):
+def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_list=None, rcolors=None,
+            word_polys=None):
     if rcolors is None:
         rcolors = []
     if region_list is None:
@@ -161,6 +168,8 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
         surr_polys = []
     if baselines_list is None:
         baselines_list = []
+    if word_polys is None:
+        word_polys = []
     if ax is None:
         fig, ax = plt.subplots()  # type: # (plt.Figure, plt.Axes)
         fig.canvas.set_window_title(img_path)
@@ -196,6 +205,11 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
         surr_poly_collection = add_polygons(ax, surr_polys, DEFAULT_COLOR, closed=True)
         surr_poly_collection.set_visible(False)
         views['surr_polys'] = [surr_poly_collection]
+
+    if word_polys:
+        word_poly_collection = add_polygons(ax, word_polys, DEFAULT_COLOR, closed=True)
+        word_poly_collection.set_visible(False)
+        views['word_polys'] = [word_poly_collection]
 
     if region_list:
         for i, regions in enumerate(region_list):
@@ -257,11 +271,14 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
     textlines = page.get_textlines()
     surr_polys = [tl.surr_p.points_list for tl in textlines if (tl and tl.surr_p)]
 
+    words = page.get_words()
+    word_polys = [word.surr_p.points_list for word in words if (word and word.surr_p)]
+
     # # Maximize plotting window
     # mng = plt.get_current_fig_manager()
     # mng.resize(*mng.window.maxsize())
 
-    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors)
+    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors, word_polys)
 
 
 def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True):

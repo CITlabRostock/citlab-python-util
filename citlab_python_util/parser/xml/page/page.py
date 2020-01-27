@@ -444,6 +444,22 @@ class Page:
 
         return res
 
+    def get_words(self, text_line_nd=None):
+        if text_line_nd  is not None:
+            word_nds = self.get_child_by_name(text_line_nd, page_const.sWORD)
+        else:
+            word_nds = self.get_child_by_name(self.page_doc, page_const.sWORD)
+
+        res = []
+        for word in word_nds:
+            word_id = word.get("id")
+            word_custom_attr = self.parse_custom_attr(word.get(page_const.sCUSTOM_ATTR))
+            word_text = self.get_text_equiv(word)
+            word_poly = self.get_point_list(word)
+            res.append(Word(word_id, word_custom_attr, word_text, word_poly))
+
+        return res
+
     def set_textline_attr(self, textlines):
         """
 
