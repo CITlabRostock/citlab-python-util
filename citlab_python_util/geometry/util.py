@@ -2,6 +2,7 @@ import functools
 
 import math
 import numpy as np
+from collections import Counter
 from scipy.spatial import Delaunay
 
 from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, norm_poly_dists
@@ -564,94 +565,133 @@ def convex_hull(points):
     return lower_hull[:-1] + upper_hull[:-1]
 
 
-def alpha_shape(points, alpha, only_outer=True):
+def alpha_shape(points, alpha):
     """
-    Computation of the alpha shape (concave hull) of a set of two dimensional points.
+    Computation of the alpha-shape (concave hull) of a set of two dimensional points.
+    Possible outliers might be ignored by the concave hull for too small values for alpha.
 
     :param points: np.array of shape (n,2) points
-    :param alpha: alpha value (for alpha -> infinity the algorithm computes the convex hull)
-    :param only_outer: boolean value to specify if we keep only the outer border or also inner edges
+    :param alpha: alpha value > 0 (for alpha -> infinity the algorithm computes the convex hull)
 
-    :return: sorted list of [i,j] points representing the edge vertices of the alpha-shape
+    :return: sorted list of points [x,y] representing the edge vertices of the alpha-shape
     """
 
-    def add_edge(edges, i, j):
-        """
-        Add a line between the i-th and j-th points, if not in the list already.
-        """
-        if (i, j) in edges or (j, i) in edges:
-            # already added
-            assert (j, i) in edges, "Can't go twice over same directed edge right?"
+    def get_ordered_boundaries(edges):
+        circle_edges, unvisited_edges = get_ordered_circles(edges=edges)
+        circle_list = [circle_edges]
 
-            if only_outer:
-                # if both neighboring triangles are in shape, it's not a boundary edge
-                edges.remove((j, i))
-            return
+        while len(unvisited_edges) > 0:
+            circle_edges, unvisited_edges = get_ordered_circles(edges=unvisited_edges)
+            circle_list.append(circle_edges)
 
-        edges.append((i, j))
+        return circle_list
 
-    def sort_edges(edges):
-        """
-        Sorting of the edge indices.
-        """
-        sorted_edges = [edges[0]]
+    def get_ordered_circles(edges):
+        if not edges:
+            return [], []
 
-        while len(sorted_edges) < len(edges):
-            for edg in edges:
-                if edg[0] == sorted_edges[-1][1]:
-                    sorted_edges.append(edg)
-                    break
+        circle_edges = [edges[0]]
+        unvisited_edges = edges[1:]
 
-        return sorted_edges
+        while len(circle_edges) < len(edges):
+            nothing = True
+
+            for edge in edges:
+                if edge in circle_edges or (edge[1], edge[0]) in circle_edges:
+                    continue
+
+                if edge[0] == circle_edges[-1][1]:
+                    circle_edges.append(edge)
+                    unvisited_edges.remove(edge)
+                    nothing = False
+                elif edge[1] == circle_edges[-1][1]:
+                    circle_edges.append((edge[1], edge[0]))
+                    unvisited_edges.remove(edge)
+                    nothing = False
+
+            if nothing:
+                break
+
+        return circle_edges, unvisited_edges
+
+    assert alpha > 0, "alpha value has to be greater than zero"
 
     # algorithm needs at least four points
     if points.shape[0] <= 3:
         boundary_points = points.tolist()
         boundary_points.append(boundary_points[0])
-
         return boundary_points
 
-    tri = Delaunay(points)
     edges = []
+    triangulation = Delaunay(points)
 
-    # loop over triangles: ia, ib, ic = indices of corner points of the triangle
-    for ia, ib, ic in tri.vertices:
-        pa = points[ia]
-        pb = points[ib]
-        pc = points[ic]
+    # loop over all Delaunay triangles:
+    # index_a, index_b, index_c = indices of the corner points of the triangle
+    for index_a, index_b, index_c in triangulation.vertices:
+        point_a = points[index_a]
+        point_b = points[index_b]
+        point_c = points[index_c]
 
         # computing radius of triangle circum circle:
         # lengths of sides of triangle
-        a = np.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
-        b = np.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
-        c = np.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
+        a = np.linalg.norm(point_a - point_b)
+        b = np.linalg.norm(point_b - point_c)
+        c = np.linalg.norm(point_c - point_a)
 
         # semi perimeter of triangle
         s = (a + b + c) / 2.0
 
         # area of triangle by Heron's formula
         area = np.sqrt(s * (s - a) * (s - b) * (s - c))
+
+        # radius of triangle circum circle
         circum_r = a * b * c / (4.0 * (area + 1e-8))
 
-        # print("here's the radius filter: ", circum_r)
         if circum_r < alpha:
-            add_edge(edges, ia, ib)
-            add_edge(edges, ib, ic)
-            add_edge(edges, ic, ia)
+            if (index_a, index_b) in edges:
+                edges.remove((index_a, index_b))
+            elif (index_b, index_a) in edges:
+                edges.remove((index_b, index_a))
+            else:
+                edges.append((index_a, index_b))
 
-    # when empty list of edges the convex hull is computed
-    # (for alpha -> infinity the algorithm computes the convex hull)
-    if not edges:
-        print("alpha value not suitable -> convex hull is computed")
-        return alpha_shape(points, alpha=1e10, only_outer=True)
+            if (index_b, index_c) in edges:
+                edges.remove((index_b, index_c))
+            elif (index_c, index_b) in edges:
+                edges.remove((index_c, index_b))
+            else:
+                edges.append((index_b, index_c))
 
-    # get the edges in right order
-    sorted_edges = sort_edges(edges)
+            if (index_c, index_a) in edges:
+                edges.remove((index_c, index_a))
+            elif (index_a, index_c) in edges:
+                edges.remove((index_a, index_c))
+            else:
+                edges.append((index_c, index_a))
 
-    # get the edge vertices in right order
+    boundaries = get_ordered_boundaries(edges=edges)
+
+    # no boundary edges or
+    # boundary with several distant circles / several circles intersecting each other in one point
+    if boundaries == [[]] or len(boundaries) > 1:
+        print("alpha value not suitable -> is increased")
+        return alpha_shape(points=points, alpha=alpha + alpha * 0.2)
+
+    # boundary with several circles intersecting each other in one point
+    edge_list = [j for i in boundaries[0] for j in i]
+    edge_counter = Counter(edge_list)
+
+    for edge in edge_counter:
+        if edge_counter[edge] > 2:
+            print("alpha value not suitable -> is increased")
+            return alpha_shape(points, alpha=alpha + alpha * 0.2)
+
+    edges = boundaries[0]
     boundary_points = []
-    for edg in sorted_edges:
-        boundary_points.append(points[edg[0]].tolist())
+
+    # get the coordinates of the ordered edge vertices
+    for edge in edges:
+        boundary_points.append(points[edge[0]].tolist())
     boundary_points.append(boundary_points[0])
 
     return boundary_points
