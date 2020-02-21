@@ -222,9 +222,9 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
 
     # Add article ids to the legend
     # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
-    article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
-    ax.legend(article_collection, [coll.get_label() for coll in article_collection], bbox_to_anchor=[1.0, 1.0],
-              loc="upper left")
+    # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
+    # ax.legend(article_collection, [coll.get_label() for coll in article_collection], bbox_to_anchor=[1.0, 1.0],
+    #           loc="upper left")
     # ax.legend(ax.collections, ["a-id " + str(i) for i in range(len(ax.collections))], loc="upper left", bbox_to_anchor=(1.1, 1.05))
 
     # ax.autoscale_view()
@@ -396,7 +396,7 @@ def plot_folder(path_to_folder, plot_article=True):
         # exit(1)
 
     # Iterate over the images
-    for img_fname in [img_fname for img_fname in filenames if img_fname.endswith((".jpg", ".png", ".tif"))]:
+    for img_fname in sorted([img_fname for img_fname in filenames if img_fname.endswith((".jpg", ".png", ".tif"))]):
         path_to_img = os.path.join(path_to_folder, img_fname)
         path_to_page = None
         if page_folder:
@@ -408,11 +408,14 @@ def plot_folder(path_to_folder, plot_article=True):
 
 
 if __name__ == '__main__':
-    # path_to_img = "./test/resources/newseye_as_test_data/image_files/0033_nzz_18120804_0_0_a1_p1_1.tif"
-    # path_to_xml = "./test/resources/newseye_as_test_data/xml_files_hy/0033_nzz_18120804_0_0_a1_p1_1.xml"
-    #
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
-    # plt.show()
+    path_to_img = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
+                  "ONB_krz_19330701_008.jpg"
+    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
+                  "page/ONB_krz_19330701_008.xml"
+    p = Page(path_to_xml)
+    print("Number of regions ", len(p.get_regions()['TextRegion']))
+    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
+    plt.show()
 
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
@@ -421,5 +424,6 @@ if __name__ == '__main__':
     # plot_list(path_to_img_lst, path_to_hyp_lst, None, plot_article=True, force_equal_names=True)
 
     # path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/136358/ONB_aze_18950706"
-    path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
-    plot_folder(path_to_folder)
+    # path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
+    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274954/ONB_ibn_19110701_corrected_duplicated"
+    # plot_folder(path_to_folder)
