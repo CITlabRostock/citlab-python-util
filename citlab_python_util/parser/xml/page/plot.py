@@ -220,12 +220,12 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
                 views['baselines'].append(baseline_collection)
             else:
                 views['baselines'] = [baseline_collection]
-        if plot_articles:
-            # Add article ids to the legend
-            # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
-            # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
-            ax.legend(article_collection, [coll.get_label() for coll in article_collection],
-                      bbox_to_anchor=[1.0, 1.0], loc="upper left")
+        # if plot_articles:
+        #     # Add article ids to the legend
+        #     # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
+        #     # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
+        #     ax.legend(article_collection, [coll.get_label() for coll in article_collection],
+        #               bbox_to_anchor=[1.0, 1.0], loc="upper left")
 
     if surr_polys:
         surr_poly_collection = add_polygons(ax, surr_polys, DEFAULT_COLOR, closed=True)
