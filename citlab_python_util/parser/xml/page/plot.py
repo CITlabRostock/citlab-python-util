@@ -2,6 +2,7 @@
 import os
 import random
 import re
+import functools
 
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -156,8 +157,23 @@ def check_type(lst, t):
     return True
 
 
+def compare_article_ids(a, b):
+    if a is None and b is None:
+        return 0
+    elif a is None:
+        return 1
+    elif b is None:
+        return -1
+    elif int(a[1:]) < int(b[1:]):
+        return -1
+    elif int(a[1:]) == int(b[1:]):
+        return 0
+    else:
+        return 1
+
+
 def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_list=None, rcolors=None,
-            word_polys=None):
+            word_polys=None, plot_articles=False):
     if rcolors is None:
         rcolors = []
     if region_list is None:
@@ -192,14 +208,24 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
         bcolors = [DEFAULT_COLOR] * len(baselines_list)
 
     if baselines_list:
+        article_collection = []
         for i, blines in enumerate(baselines_list):
             baseline_collection = add_polygons(ax, blines, bcolors[i], closed=False)
-            # TODO: change Article ID to the original ID!!
-            baseline_collection.set_label("a-id " + str(i))
+            article_collection.append(baseline_collection)
+            if bcolors[i] == DEFAULT_COLOR:
+                baseline_collection.set_label("None")
+            else:
+                baseline_collection.set_label("a-id " + str(i+1))
             if 'baselines' in views:
                 views['baselines'].append(baseline_collection)
             else:
                 views['baselines'] = [baseline_collection]
+        if plot_articles:
+            # Add article ids to the legend
+            # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
+            # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
+            ax.legend(article_collection, [coll.get_label() for coll in article_collection],
+                      bbox_to_anchor=[1.0, 1.0], loc="upper left")
 
     if surr_polys:
         surr_poly_collection = add_polygons(ax, surr_polys, DEFAULT_COLOR, closed=True)
@@ -220,15 +246,6 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
             else:
                 views['regions'] = [region_collection]
 
-    # Add article ids to the legend
-    # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
-    # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
-    # ax.legend(article_collection, [coll.get_label() for coll in article_collection], bbox_to_anchor=[1.0, 1.0],
-    #           loc="upper left")
-    # ax.legend(ax.collections, ["a-id " + str(i) for i in range(len(ax.collections))], loc="upper left", bbox_to_anchor=(1.1, 1.05))
-
-    # ax.autoscale_view()
-
     # Toggle baselines with "b", image with "i", surrounding polygons with "p"
     plt.connect('key_press_event', lambda event: toggle_view(event, views))
 
@@ -243,21 +260,33 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
     if not article_dict:
         bcolors = []
         blines_list = []
-    elif None in article_dict:
-        if plot_article:
-            bcolors = COLORS[:len(article_dict) - 1] + [DEFAULT_COLOR]
-        else:
-            bcolors = [DEFAULT_COLOR] * len(article_dict)
-
-        blines_list = [[tline.baseline.points_list for tline in tlines if tline.baseline]
-                       for (a_id, tlines) in article_dict.items() if a_id is not None] \
-                      + [[tline.baseline.points_list for tline in article_dict[None] if tline.baseline]]
     else:
+        unique_ids = sorted(set(article_dict.keys()), key=functools.cmp_to_key(compare_article_ids))
+        if None in unique_ids:
+            article_colors = dict(zip(unique_ids, COLORS[:len(unique_ids) - 1] + [DEFAULT_COLOR]))
+        else:
+            article_colors = dict(zip(unique_ids, COLORS[:len(unique_ids)]))
         if plot_article:
-            bcolors = COLORS[:len(article_dict)]
+            bcolors = [article_colors[id] for id in unique_ids]
         else:
             bcolors = [DEFAULT_COLOR] * len(article_dict)
-        blines_list = [[tline.baseline.points_list for tline in tlines] for tlines in article_dict.values()]
+        blines_list = [[textline.baseline.points_list for textline in article_dict[id]] for id in unique_ids]
+
+    # elif None in article_dict:
+    #     if plot_article:
+    #         bcolors = COLORS[:len(article_dict) - 1] + [DEFAULT_COLOR]
+    #     else:
+    #         bcolors = [DEFAULT_COLOR] * len(article_dict)
+    #
+    #     blines_list = [[tline.baseline.points_list for tline in tlines if tline.baseline]
+    #                    for (a_id, tlines) in article_dict.items() if a_id is not None] \
+    #                   + [[tline.baseline.points_list for tline in article_dict[None] if tline.baseline]]
+    # else:
+    #     if plot_article:
+    #         bcolors = COLORS[:len(article_dict)]
+    #     else:
+    #         bcolors = [DEFAULT_COLOR] * len(article_dict)
+    #     blines_list = [[tline.baseline.points_list for tline in tlines] for tlines in article_dict.values()]
 
     region_dict = page.get_regions()
     if not region_dict:
@@ -278,7 +307,7 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
     # mng = plt.get_current_fig_manager()
     # mng.resize(*mng.window.maxsize())
 
-    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors, word_polys)
+    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors, word_polys, plot_article)
 
 
 def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True):
@@ -408,14 +437,13 @@ def plot_folder(path_to_folder, plot_article=True):
 
 
 if __name__ == '__main__':
-    path_to_img = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
-                  "ONB_krz_19330701_008.jpg"
-    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
-                  "page/ONB_krz_19330701_008.xml"
-    p = Page(path_to_xml)
-    print("Number of regions ", len(p.get_regions()['TextRegion']))
-    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
-    plt.show()
+    # path_to_img = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
+    #               "ONB_krz_19330701_003.jpg"
+    # path_to_xml = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
+    #               "page/ONB_krz_19330701_003.xml"
+    # p = Page(path_to_xml)
+    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
+    # plt.show()
 
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
@@ -425,5 +453,5 @@ if __name__ == '__main__':
 
     # path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/136358/ONB_aze_18950706"
     # path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
-    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274954/ONB_ibn_19110701_corrected_duplicated"
-    # plot_folder(path_to_folder)
+    path_to_folder = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated"
+    plot_folder(path_to_folder)
