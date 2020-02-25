@@ -187,13 +187,13 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     if word_polys is None:
         word_polys = []
     if ax is None:
-        fig, ax = plt.subplots()  # type: # (plt.Figure, plt.Axes)
+        fig, ax = plt.subplots(figsize=(16, 9))  # type: # (plt.Figure, plt.Axes)
         fig.canvas.set_window_title(img_path)
     views = {}
 
-    # Maximize plotting window
-    mng = plt.get_current_fig_manager()
-    mng.resize(*mng.window.maxsize())
+    # # Maximize plotting window
+    # mng = plt.get_current_fig_manager()
+    # mng.resize(*mng.window.maxsize())
 
     try:
         img_plot = add_image(ax, img_path)
@@ -220,12 +220,12 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
                 views['baselines'].append(baseline_collection)
             else:
                 views['baselines'] = [baseline_collection]
-        # if plot_articles:
-        #     # Add article ids to the legend
-        #     # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
-        #     # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
-        #     ax.legend(article_collection, [coll.get_label() for coll in article_collection],
-        #               bbox_to_anchor=[1.0, 1.0], loc="upper left")
+        if plot_articles:
+            # Add article ids to the legend
+            # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
+            # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
+            ax.legend(article_collection, [coll.get_label() for coll in article_collection],
+                      bbox_to_anchor=[1.0, 1.0], loc="upper left")
 
     if surr_polys:
         surr_poly_collection = add_polygons(ax, surr_polys, DEFAULT_COLOR, closed=True)
@@ -437,13 +437,13 @@ def plot_folder(path_to_folder, plot_article=True):
 
 
 if __name__ == '__main__':
-    # path_to_img = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
-    #               "ONB_krz_19330701_003.jpg"
-    # path_to_xml = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
-    #               "page/ONB_krz_19330701_003.xml"
-    # p = Page(path_to_xml)
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
-    # plt.show()
+    path_to_img = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
+                  "ONB_krz_19330701_009.jpg"
+    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated/" \
+                  "page/ONB_krz_19330701_009.xml"
+    p = Page(path_to_xml)
+    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
+    plt.show()
 
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
@@ -453,5 +453,5 @@ if __name__ == '__main__':
 
     # path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/136358/ONB_aze_18950706"
     # path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
-    path_to_folder = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated"
-    plot_folder(path_to_folder)
+    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/onb_232_textblocks/274951/ONB_krz_19330701_corrected_duplicated"
+    # plot_folder(path_to_folder)
