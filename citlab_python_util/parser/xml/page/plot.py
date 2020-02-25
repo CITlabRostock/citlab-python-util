@@ -173,7 +173,7 @@ def compare_article_ids(a, b):
 
 
 def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_list=None, rcolors=None,
-            word_polys=None, plot_articles=False):
+            word_polys=None, plot_legend=False):
     if rcolors is None:
         rcolors = []
     if region_list is None:
@@ -220,7 +220,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
                 views['baselines'].append(baseline_collection)
             else:
                 views['baselines'] = [baseline_collection]
-        if plot_articles:
+        if plot_legend:
             # Add article ids to the legend
             # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
             # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
@@ -250,7 +250,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     plt.connect('key_press_event', lambda event: toggle_view(event, views))
 
 
-def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
+def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True):
     if type(page) == str:
         page = Page(page)
     assert type(page) == Page, f"Type must be Page, got {type(page)} instead."
@@ -307,7 +307,7 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
     # mng = plt.get_current_fig_manager()
     # mng.resize(*mng.window.maxsize())
 
-    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors, word_polys, plot_article)
+    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors, word_polys, plot_legend)
 
 
 def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True):
