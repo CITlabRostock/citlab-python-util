@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+import collections
 import os
 import random
 import re
 
 import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageFile
 from matplotlib import colors as mcolors
 from matplotlib.collections import PolyCollection
 
 from citlab_python_util.geometry.polygon import Polygon
+from citlab_python_util.parser.xml.page import page_constants
 from citlab_python_util.parser.xml.page.page import Page
 
 # Use the default color (black) for the baselines belonging to no article
@@ -48,6 +50,7 @@ for color in COLORS_SORTED:
         COLORS.append(color)
 COLORS = 5 * COLORS
 
+
 # Two interfaces supported by matplotlib:
 #   1. object-oriented interface using axes.Axes and figure.Figure objects
 #   2. based on MATLAB using a state-based interface
@@ -64,6 +67,7 @@ def add_image(axes, path):
     :return: mpimg.AxesImage
     """
     try:
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
         img = Image.open(path)
         img = img.convert("RGB")
         return axes.imshow(img)
@@ -71,13 +75,18 @@ def add_image(axes, path):
         print("Can't add image to the plot. Check if '{}' is a valid path.".format(path))
 
 
-def add_polygons(axes, poly_list, color=DEFAULT_COLOR, closed=False, linewidth=1.2, alpha=1.0):
+def add_polygons(axes, poly_list, color=DEFAULT_COLOR, closed=False, linewidth=1.2, alpha=1.0, filled=False):
     """poly_list = [[(x1,y1), (x2,y2), ... , (xN,yN)], ... , [(u1,v1), (u2, v2), ... , (uM, vM)]]
     else if poly_list if of type Polygon convert it to that form."""
     if check_type(poly_list, [Polygon]):
         poly_list = [list(zip(poly.x_points, poly.y_points)) for poly in poly_list]
     try:
-        poly_collection = PolyCollection(poly_list, closed=closed, edgecolors=color, facecolors="None",
+        if filled:
+            alpha = 0.5
+            facecolors = color
+        else:
+            facecolors = "None"
+        poly_collection = PolyCollection(poly_list, closed=closed, edgecolors=color, facecolors=facecolors,
                                          linewidths=linewidth, alpha=alpha)
         return axes.add_collection(poly_collection)
     except ValueError:
@@ -93,39 +102,45 @@ def toggle_view(event, views):
     :type event: matplotlib.backend_bases.KeyEvent
     :return: None
     """
-    # Toggle baselines
-    if event.key == 'b' and "baselines" in views:
-        for bline in views["baselines"]:
-            is_visible = bline.get_visible()
-            bline.set_visible(not is_visible)
-        # is_visible = views["baselines"].get_visible()
-        # views["baselines"].set_visible(not is_visible)
-        plt.draw()
 
-    # Toggle image
+    # toggle polygons function
+    def _toggle_polys(event_key, poly_collection_name):
+        if event.key == event_key and poly_collection_name in views:
+            is_same_visibility = all([polygon.get_visible() if views[poly_collection_name][0].get_visible() else not(polygon.get_visible())
+                for polygon in views[poly_collection_name]])
+            if is_same_visibility:
+                for polygon in views[poly_collection_name]:
+                    is_visible = polygon.get_visible()
+                    polygon.set_visible(not is_visible)
+            else:
+                for polygon in views[poly_collection_name]:
+                    polygon.set_visible(True)
+            plt.draw()
+
     if event.key == 'i' and "image" in views:
         is_visible = views["image"].get_visible()
         views["image"].set_visible(not is_visible)
         plt.draw()
+    _toggle_polys('b', 'baselines')
+    _toggle_polys('p', 'surr_polys')
+    _toggle_polys('w', 'word_polys')
+    _toggle_polys('r', 'regions')
+    _toggle_polys('1', page_constants.sTEXTREGION)
+    _toggle_polys('2', page_constants.sSEPARATORREGION)
+    _toggle_polys('3', page_constants.sGRAPHICREGION)
+    _toggle_polys('4', page_constants.sIMAGEREGION)
+    _toggle_polys('5', page_constants.sTABLEREGION)
+    _toggle_polys('6', page_constants.sADVERTREGION)
+    _toggle_polys('7', page_constants.sLINEDRAWINGREGION)
+    _toggle_polys('7', page_constants.sCHARTREGION)
+    _toggle_polys('7', page_constants.sCHEMREGION)
+    _toggle_polys('7', page_constants.sMATHSREGION)
+    _toggle_polys('7', page_constants.sMUSICREGION)
+    _toggle_polys('8', page_constants.sNOISEREGION)
+    _toggle_polys('9', page_constants.sUNKNOWNREGION)
 
-    # Toggle surrounding polygons
-    if event.key == 'p' and "surr_polys" in views:
-        for surr_poly in views["surr_polys"]:
-            is_visible = surr_poly.get_visible()
-            surr_poly.set_visible(not is_visible)
-        plt.draw()
-
-    if event.key == 'w' and "word_polys" in views:
-        for word_poly in views["word_polys"]:
-            is_visible = word_poly.get_visible()
-            word_poly.set_visible(not is_visible)
-        plt.draw()
-
-    if event.key == 'r' and "regions" in views:
-        for region in views["regions"]:
-            is_visible = region.get_visible()
-            region.set_visible(not is_visible)
-        plt.draw()
+    if event.key == 'n':
+        plt.close()
 
     if event.key == 'q':
         print("Terminate..")
@@ -136,7 +151,18 @@ def toggle_view(event, views):
               "\ti: toggle image\n"
               "\tb: toggle baselines\n"
               "\tp: toggle surrounding polygons\n"
-              "\tr: toggle regions\n"
+              "\tr: toggle all regions\n"
+              "\t\t1: TextRegion\n"
+              "\t\t2: SeparatorRegion\n"
+              "\t\t3: GraphicRegion\n"
+              "\t\t3: ImageRegion\n"
+              "\t\t4: TableRegion\n"
+              "\t\t5: AdvertRegion\n"
+              "\t\t6: LineDrawingRegion\n"
+              "\t\t7: ChartRegion / ChemRegion / MathsRegion / MusicRegion\n"
+              "\t\t8: NoiseRegion\n"
+              "\t\t9: UnknownRegion\n"
+              "\tn: next image\n"
               "\tq: quit\n"
               "\th: show this help")
     else:
@@ -156,12 +182,13 @@ def check_type(lst, t):
     return True
 
 
-def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_list=None, rcolors=None,
-            word_polys=None):
+def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_dict_poly=None,
+            rcolors=None,
+            word_polys=None, fill_regions=False):
     if rcolors is None:
-        rcolors = []
-    if region_list is None:
-        region_list = []
+        rcolors = {}
+    if region_dict_poly is None:
+        region_dict_poly = {}
     if bcolors is None:
         bcolors = []
     if surr_polys is None:
@@ -173,21 +200,22 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     if ax is None:
         fig, ax = plt.subplots()  # type: # (plt.Figure, plt.Axes)
         fig.canvas.set_window_title(img_path)
-    views = {}
+    views = collections.defaultdict(list)
 
     # Maximize plotting window
     mng = plt.get_current_fig_manager()
     mng.resize(*mng.window.maxsize())
+    # mng.full_screen_toggle()
 
     try:
         img_plot = add_image(ax, img_path)
         views.update({"image": img_plot})
-    except IOError:
-        print(f"Can't display image given by path: {img_path}")
+    except IOError as err:
+        print(f"Can't display image given by path: {img_path} - {err}")
 
     if len(bcolors):
         assert len(bcolors) >= len(baselines_list), f"There should be at least {len(baselines_list)}" \
-            f" colors but just got {len(bcolors)}"
+                                                    f" colors but just got {len(bcolors)}"
     else:
         bcolors = [DEFAULT_COLOR] * len(baselines_list)
 
@@ -196,10 +224,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
             baseline_collection = add_polygons(ax, blines, bcolors[i], closed=False)
             # TODO: change Article ID to the original ID!!
             baseline_collection.set_label("a-id " + str(i))
-            if 'baselines' in views:
-                views['baselines'].append(baseline_collection)
-            else:
-                views['baselines'] = [baseline_collection]
+            views['baselines'].append(baseline_collection)
 
     if surr_polys:
         surr_poly_collection = add_polygons(ax, surr_polys, DEFAULT_COLOR, closed=True)
@@ -211,14 +236,12 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
         word_poly_collection.set_visible(False)
         views['word_polys'] = [word_poly_collection]
 
-    if region_list:
-        for i, regions in enumerate(region_list):
-            region_collection = add_polygons(ax, regions, rcolors[i], closed=True)
+    if region_dict_poly:
+        for region_name, regions in region_dict_poly.items():
+            region_collection = add_polygons(ax, regions, rcolors[region_name], closed=True, filled=fill_regions)
             region_collection.set_visible(False)
-            if 'regions' in views:
-                views['regions'].append(region_collection)
-            else:
-                views['regions'] = [region_collection]
+            views[region_name] = [region_collection]
+            views['regions'].append(region_collection)
 
     # Add article ids to the legend
     # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
@@ -233,7 +256,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     plt.connect('key_press_event', lambda event: toggle_view(event, views))
 
 
-def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
+def plot_pagexml(page, path_to_img, ax=None, plot_article=True, fill_regions=False):
     if type(page) == str:
         page = Page(page)
     assert type(page) == Page, f"Type must be Page, got {type(page)} instead."
@@ -261,11 +284,18 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
 
     region_dict = page.get_regions()
     if not region_dict:
-        rcolors = []
-        region_list = []
+        rcolors = {}
+        region_dict_polygons = {}
     else:
-        rcolors = COLORS[:len(region_dict)]
-        region_list = [[region.points.points_list for region in regions] for regions in region_dict.values()]
+        rcolors = {page_constants.sTEXTREGION: "darkgreen", page_constants.sSEPARATORREGION: "darkviolet",
+                   page_constants.sGRAPHICREGION: "darkcyan", page_constants.sIMAGEREGION: "darkblue",
+                   page_constants.sTABLEREGION: "darkorange", page_constants.sADVERTREGION: "yellow",
+                   page_constants.sLINEDRAWINGREGION: "salmon", page_constants.sCHARTREGION: "brown",
+                   page_constants.sCHEMREGION: "navy", page_constants.sMATHSREGION: "crimson",
+                   page_constants.sNOISEREGION: "darkkhaki", page_constants.sMUSICREGION: "firebrick",
+                   page_constants.sUNKNOWNREGION: "darkorchid"}
+        region_dict_polygons = {region_name: [region.points.points_list for region in regions] for region_name, regions
+                                in region_dict.items()}
 
     # get surrounding polygons
     textlines = page.get_textlines()
@@ -278,7 +308,8 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True):
     # mng = plt.get_current_fig_manager()
     # mng.resize(*mng.window.maxsize())
 
-    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_list, rcolors, word_polys)
+    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_dict_polygons, rcolors, word_polys,
+            fill_regions=fill_regions)
 
 
 def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True):
@@ -380,7 +411,7 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_name
                     plt.show()
 
 
-def plot_folder(path_to_folder, plot_article=True):
+def plot_folder(path_to_folder, plot_article=True, fill_regions=False):
     try:
         _, dirnames, filenames = next(os.walk(path_to_folder))
     except StopIteration:
@@ -403,7 +434,7 @@ def plot_folder(path_to_folder, plot_article=True):
             path_to_page = os.path.join(path_to_folder, page_folder, re.sub(r"\..*$", ".xml", img_fname))
 
         # fig, ax = plt.subplots()
-        plot_pagexml(path_to_page, path_to_img, ax=None, plot_article=plot_article)
+        plot_pagexml(path_to_page, path_to_img, ax=None, plot_article=plot_article, fill_regions=fill_regions)
         plt.show()
 
 
@@ -421,5 +452,17 @@ if __name__ == '__main__':
     # plot_list(path_to_img_lst, path_to_hyp_lst, None, plot_article=True, force_equal_names=True)
 
     # path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/136358/ONB_aze_18950706"
-    path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
-    plot_folder(path_to_folder)
+    # path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
+    # plot_folder(path_to_folder)
+
+    # path_to_img = "/home/max/Downloads/transkribus_downloads/ONB_aze_18950706_duplicated/ONB_aze_18950706_duplicated/" \
+    #               "ONB_aze_18950706_1.jpg"
+    # path_to_xml = "/home/max/Downloads/transkribus_downloads/ONB_aze_18950706_duplicated/ONB_aze_18950706_duplicated/" \
+    #               "page/ONB_aze_18950706_1.xml"
+
+    # path_to_img = "/home/max/ida_example/aze18950123_00000001.jpg"
+    # path_to_xml = "/home/max/ida_example/page_with_article_information/aze18950123_00000001.xml"
+    plot_folder("/home/max/data/la/textblock_detection/training-GBNv1/DerGemeindebote/train/", plot_article=False,
+                fill_regions=True)
+    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True)
+    plt.show()

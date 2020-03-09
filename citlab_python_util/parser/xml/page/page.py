@@ -445,7 +445,7 @@ class Page:
         return res
 
     def get_words(self, text_line_nd=None):
-        if text_line_nd  is not None:
+        if text_line_nd is not None:
             word_nds = self.get_child_by_name(text_line_nd, page_const.sWORD)
         else:
             word_nds = self.get_child_by_name(self.page_doc, page_const.sWORD)
