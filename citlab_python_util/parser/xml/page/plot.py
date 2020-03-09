@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import collections
+import functools
 import os
 import random
 import re
-import functools
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFile
@@ -50,6 +50,7 @@ for color in COLORS_SORTED:
     if color not in COLORS:
         COLORS.append(color)
 COLORS = 5 * COLORS
+
 
 # Two interfaces supported by matplotlib:
 #   1. object-oriented interface using axes.Axes and figure.Figure objects
@@ -106,8 +107,9 @@ def toggle_view(event, views):
     # toggle polygons function
     def _toggle_polys(event_key, poly_collection_name):
         if event.key == event_key and poly_collection_name in views:
-            is_same_visibility = all([polygon.get_visible() if views[poly_collection_name][0].get_visible() else not(polygon.get_visible())
-                for polygon in views[poly_collection_name]])
+            is_same_visibility = all(
+                [polygon.get_visible() if views[poly_collection_name][0].get_visible() else not (polygon.get_visible())
+                 for polygon in views[poly_collection_name]])
             if is_same_visibility:
                 for polygon in views[poly_collection_name]:
                     is_visible = polygon.get_visible()
@@ -181,6 +183,7 @@ def check_type(lst, t):
             return False
     return True
 
+
 def compare_article_ids(a, b):
     if a is None and b is None:
         return 0
@@ -195,9 +198,9 @@ def compare_article_ids(a, b):
     else:
         return 1
 
+
 def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_dict_poly=None,
-            rcolors=None,
-            word_polys=None, plot_legend=False, fill_regions=False):
+            rcolors=None, word_polys=None, plot_legend=False, fill_regions=False):
     if rcolors is None:
         rcolors = {}
     if region_dict_poly is None:
@@ -240,7 +243,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
             if bcolors[i] == DEFAULT_COLOR:
                 baseline_collection.set_label("None")
             else:
-                baseline_collection.set_label("a-id " + str(i+1))
+                baseline_collection.set_label("a-id " + str(i + 1))
             views['baselines'].append(baseline_collection)
         if plot_legend:
             # Add article ids to the legend
