@@ -3,6 +3,7 @@ import collections
 import os
 import random
 import re
+import functools
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFile
@@ -49,7 +50,6 @@ for color in COLORS_SORTED:
     if color not in COLORS:
         COLORS.append(color)
 COLORS = 5 * COLORS
-
 
 # Two interfaces supported by matplotlib:
 #   1. object-oriented interface using axes.Axes and figure.Figure objects
@@ -181,10 +181,23 @@ def check_type(lst, t):
             return False
     return True
 
+def compare_article_ids(a, b):
+    if a is None and b is None:
+        return 0
+    elif a is None:
+        return 1
+    elif b is None:
+        return -1
+    elif int(a[1:]) < int(b[1:]):
+        return -1
+    elif int(a[1:]) == int(b[1:]):
+        return 0
+    else:
+        return 1
 
 def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_dict_poly=None,
             rcolors=None,
-            word_polys=None, fill_regions=False):
+            word_polys=None, plot_legend=False, fill_regions=False):
     if rcolors is None:
         rcolors = {}
     if region_dict_poly is None:
@@ -198,14 +211,14 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     if word_polys is None:
         word_polys = []
     if ax is None:
-        fig, ax = plt.subplots()  # type: # (plt.Figure, plt.Axes)
+        fig, ax = plt.subplots(figsize=(16, 9))  # type: # (plt.Figure, plt.Axes)
         fig.canvas.set_window_title(img_path)
     views = collections.defaultdict(list)
 
-    # Maximize plotting window
-    mng = plt.get_current_fig_manager()
-    mng.resize(*mng.window.maxsize())
-    # mng.full_screen_toggle()
+    # # Maximize plotting window
+    # mng = plt.get_current_fig_manager()
+    # mng.resize(*mng.window.maxsize())
+    # # mng.full_screen_toggle()
 
     try:
         img_plot = add_image(ax, img_path)
@@ -220,11 +233,21 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
         bcolors = [DEFAULT_COLOR] * len(baselines_list)
 
     if baselines_list:
+        article_collection = []
         for i, blines in enumerate(baselines_list):
             baseline_collection = add_polygons(ax, blines, bcolors[i], closed=False)
-            # TODO: change Article ID to the original ID!!
-            baseline_collection.set_label("a-id " + str(i))
+            article_collection.append(baseline_collection)
+            if bcolors[i] == DEFAULT_COLOR:
+                baseline_collection.set_label("None")
+            else:
+                baseline_collection.set_label("a-id " + str(i+1))
             views['baselines'].append(baseline_collection)
+        if plot_legend:
+            # Add article ids to the legend
+            # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
+            # article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
+            ax.legend(article_collection, [coll.get_label() for coll in article_collection],
+                      bbox_to_anchor=[1.0, 1.0], loc="upper left")
 
     if surr_polys:
         surr_poly_collection = add_polygons(ax, surr_polys, DEFAULT_COLOR, closed=True)
@@ -243,20 +266,11 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
             views[region_name] = [region_collection]
             views['regions'].append(region_collection)
 
-    # Add article ids to the legend
-    # TODO: Sometimes there are too many articles to display -> possibility to scroll?!
-    article_collection = [coll for coll in ax.collections if coll.get_label().startswith("a-id")]
-    ax.legend(article_collection, [coll.get_label() for coll in article_collection], bbox_to_anchor=[1.0, 1.0],
-              loc="upper left")
-    # ax.legend(ax.collections, ["a-id " + str(i) for i in range(len(ax.collections))], loc="upper left", bbox_to_anchor=(1.1, 1.05))
-
-    # ax.autoscale_view()
-
     # Toggle baselines with "b", image with "i", surrounding polygons with "p"
     plt.connect('key_press_event', lambda event: toggle_view(event, views))
 
 
-def plot_pagexml(page, path_to_img, ax=None, plot_article=True, fill_regions=False):
+def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True, fill_regions=False):
     if type(page) == str:
         page = Page(page)
     assert type(page) == Page, f"Type must be Page, got {type(page)} instead."
@@ -266,21 +280,33 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, fill_regions=Fal
     if not article_dict:
         bcolors = []
         blines_list = []
-    elif None in article_dict:
-        if plot_article:
-            bcolors = COLORS[:len(article_dict) - 1] + [DEFAULT_COLOR]
-        else:
-            bcolors = [DEFAULT_COLOR] * len(article_dict)
-
-        blines_list = [[tline.baseline.points_list for tline in tlines if tline.baseline]
-                       for (a_id, tlines) in article_dict.items() if a_id is not None] \
-                      + [[tline.baseline.points_list for tline in article_dict[None] if tline.baseline]]
     else:
+        unique_ids = sorted(set(article_dict.keys()), key=functools.cmp_to_key(compare_article_ids))
+        if None in unique_ids:
+            article_colors = dict(zip(unique_ids, COLORS[:len(unique_ids) - 1] + [DEFAULT_COLOR]))
+        else:
+            article_colors = dict(zip(unique_ids, COLORS[:len(unique_ids)]))
         if plot_article:
-            bcolors = COLORS[:len(article_dict)]
+            bcolors = [article_colors[id] for id in unique_ids]
         else:
             bcolors = [DEFAULT_COLOR] * len(article_dict)
-        blines_list = [[tline.baseline.points_list for tline in tlines] for tlines in article_dict.values()]
+        blines_list = [[textline.baseline.points_list for textline in article_dict[id]] for id in unique_ids]
+
+    # elif None in article_dict:
+    #     if plot_article:
+    #         bcolors = COLORS[:len(article_dict) - 1] + [DEFAULT_COLOR]
+    #     else:
+    #         bcolors = [DEFAULT_COLOR] * len(article_dict)
+    #
+    #     blines_list = [[tline.baseline.points_list for tline in tlines if tline.baseline]
+    #                    for (a_id, tlines) in article_dict.items() if a_id is not None] \
+    #                   + [[tline.baseline.points_list for tline in article_dict[None] if tline.baseline]]
+    # else:
+    #     if plot_article:
+    #         bcolors = COLORS[:len(article_dict)]
+    #     else:
+    #         bcolors = [DEFAULT_COLOR] * len(article_dict)
+    #     blines_list = [[tline.baseline.points_list for tline in tlines] for tlines in article_dict.values()]
 
     region_dict = page.get_regions()
     if not region_dict:
@@ -308,7 +334,7 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, fill_regions=Fal
     # mng = plt.get_current_fig_manager()
     # mng.resize(*mng.window.maxsize())
 
-    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_dict_polygons, rcolors, word_polys,
+    plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_dict_polygons, rcolors, word_polys, plot_legend,
             fill_regions=fill_regions)
 
 
