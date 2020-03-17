@@ -58,7 +58,7 @@ COLORS = 5 * COLORS
 # "In general, try to use the object-oriented interface over the pyplot interface"
 
 
-def add_image(axes, path):
+def add_image(axes, path, height=None, width=None):
     """Add the image given by ``path`` to the plot ``axes``.
 
     :param axes: represents an individual plot
@@ -70,6 +70,8 @@ def add_image(axes, path):
     try:
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         img = Image.open(path)
+        if height is not None and width is not None:
+            img = img.resize((int(height), int(width)), 0)
         img = img.convert("RGB")
         return axes.imshow(img)
     except ValueError:
@@ -200,7 +202,7 @@ def compare_article_ids(a, b):
 
 
 def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=None, region_dict_poly=None,
-            rcolors=None, word_polys=None, plot_legend=False, fill_regions=False):
+            rcolors=None, word_polys=None, plot_legend=False, fill_regions=False, height=None, width=None):
     if rcolors is None:
         rcolors = {}
     if region_dict_poly is None:
@@ -224,7 +226,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     # # mng.full_screen_toggle()
 
     try:
-        img_plot = add_image(ax, img_path)
+        img_plot = add_image(ax, img_path, height=height, width=width)
         views.update({"image": img_plot})
     except IOError as err:
         print(f"Can't display image given by path: {img_path} - {err}")
@@ -273,7 +275,8 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     plt.connect('key_press_event', lambda event: toggle_view(event, views))
 
 
-def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True, fill_regions=False):
+def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True, fill_regions=False,
+                 use_page_image_resolution=False):
     if type(page) == str:
         page = Page(page)
     assert type(page) == Page, f"Type must be Page, got {type(page)} instead."
@@ -293,7 +296,8 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True
             bcolors = [article_colors[id] for id in unique_ids]
         else:
             bcolors = [DEFAULT_COLOR] * len(article_dict)
-        blines_list = [[textline.baseline.points_list for textline in article_dict[id]] for id in unique_ids]
+        blines_list = [[textline.baseline.points_list for textline in article_dict[id] if textline.baseline]
+                       for id in unique_ids]
 
     # elif None in article_dict:
     #     if plot_article:
@@ -337,11 +341,17 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True
     # mng = plt.get_current_fig_manager()
     # mng.resize(*mng.window.maxsize())
 
+    if use_page_image_resolution:
+        page_height, page_width = page.get_image_resolution()
+    else:
+        page_height = page_width = None
+
     plot_ax(ax, path_to_img, blines_list, surr_polys, bcolors, region_dict_polygons, rcolors, word_polys, plot_legend,
-            fill_regions=fill_regions)
+            fill_regions=fill_regions, height=page_height, width=page_width)
 
 
-def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True):
+def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True, plot_legend=False,
+              fill_regions=False, use_page_image_resolution=False):
     if not img_lst:
         print(f"No valid image list found: '{img_lst}'.")
         exit(1)
@@ -391,15 +401,18 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_name
 
                                 # Should be save to use without opening all images of the loop in a different window
                                 # The program should wait until one window is closed
-                                plot_pagexml(hyp_path, img_path, ax, plot_article)
+                                plot_pagexml(hyp_path, img_path, ax, plot_article, plot_legend, fill_regions,
+                                             use_page_image_resolution)
                             else:
                                 fig, (ax1, ax2) = plt.subplots(1, 2)
                                 fig.canvas.set_window_title(img_path)
                                 ax1.set_title('Hypothesis')
                                 ax2.set_title('Groundtruth')
 
-                                plot_pagexml(hyp_path, img_path, ax1, plot_article)
-                                plot_pagexml(gt_path, img_path, ax2, plot_article)
+                                plot_pagexml(hyp_path, img_path, ax1, plot_article, plot_legend, fill_regions,
+                                             use_page_image_resolution)
+                                plot_pagexml(gt_path, img_path, ax2, plot_article, plot_legend, fill_regions,
+                                             use_page_image_resolution)
 
                         else:
                             fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -407,8 +420,10 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_name
                             ax1.set_title('Hypothesis')
                             ax2.set_title('Groundtruth')
 
-                            plot_pagexml(hyp_path, img_path, ax1, plot_article)
-                            plot_pagexml(gt_path, img_path, ax2, plot_article)
+                            plot_pagexml(hyp_path, img_path, ax1, plot_article, plot_legend, fill_regions,
+                                         use_page_image_resolution)
+                            plot_pagexml(gt_path, img_path, ax2, plot_article, plot_legend, fill_regions,
+                                         use_page_image_resolution)
 
                         plt.show()
 
@@ -433,9 +448,11 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_name
                             continue
                     fig, ax = plt.subplots()
                     fig.canvas.set_window_title(img_path)
+
                     ax.set_title('Hypothesis')
 
-                    plot_pagexml(hyp_path, img_path, ax, plot_article)
+                    plot_pagexml(hyp_path, img_path, ax, plot_article, plot_legend, fill_regions,
+                                 use_page_image_resolution)
 
                     plt.show()
 
@@ -484,14 +501,24 @@ if __name__ == '__main__':
     # path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
     # plot_folder(path_to_folder)
 
-    # path_to_img = "/home/max/Downloads/transkribus_downloads/ONB_aze_18950706_duplicated/ONB_aze_18950706_duplicated/" \
-    #               "ONB_aze_18950706_1.jpg"
-    # path_to_xml = "/home/max/Downloads/transkribus_downloads/ONB_aze_18950706_duplicated/ONB_aze_18950706_duplicated/" \
-    #               "page/ONB_aze_18950706_1.xml"
+    # path_to_xml = "/home/max/alto_convert_example/1877-01-05_01-00001.xml"
+    # path_to_img = "/home/max/alto_convert_example/1877-01-05_01-00001.tif"
+    #
+    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True, plot_legend=False,
+    #              use_page_image_resolution=True)
 
-    # path_to_img = "/home/max/ida_example/aze18950123_00000001.jpg"
-    # path_to_xml = "/home/max/ida_example/page_with_article_information/aze18950123_00000001.xml"
-    plot_folder("/home/max/data/la/textblock_detection/training-GBNv1/DerGemeindebote/train/", plot_article=False,
-                fill_regions=True)
+    # plot_folder("/home/max/data/la/textblock_detection/training-GBNv1/DerGemeindebote/train/", plot_article=False,
+    #             fill_regions=True)
     # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True)
+
+    path_to_img_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/image_paths_errors.lst"
+    path_to_hyp_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/xml_paths_errors.lst"
+    path_to_gt_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/Delivered_results/xml_paths_errors.lst"
+
+    # path_to_img_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/lists/train_img.lst'
+    # path_to_hyp_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/hyp/200206_LA_newspaper_onb_corrected/train_hyp.lst'
+    # path_to_gt_lst = None
+
+    plot_list(path_to_img_lst, path_to_hyp_lst, gt_lst=None, plot_article=False, plot_legend=False)
+
     plt.show()
