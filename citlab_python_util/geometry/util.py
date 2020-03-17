@@ -2,6 +2,8 @@ import functools
 
 import math
 import numpy as np
+from collections import Counter
+from scipy.spatial import Delaunay
 
 from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, norm_poly_dists
 from citlab_python_util.geometry.rectangle import Rectangle
@@ -561,6 +563,138 @@ def convex_hull(points):
         upper_hull.append(pt)
 
     return lower_hull[:-1] + upper_hull[:-1]
+
+
+def alpha_shape(points, alpha):
+    """
+    Computation of the alpha-shape (concave hull) of a set of two dimensional points.
+    Possible outliers might be ignored by the concave hull for too small values for alpha.
+
+    :param points: np.array of shape (n,2) points
+    :param alpha: alpha value > 0 (for alpha -> infinity the algorithm computes the convex hull)
+
+    :return: sorted list of points [x,y] representing the edge vertices of the alpha-shape
+    """
+
+    def get_ordered_boundaries(edges):
+        circle_edges, unvisited_edges = get_ordered_circles(edges=edges)
+        circle_list = [circle_edges]
+
+        while len(unvisited_edges) > 0:
+            circle_edges, unvisited_edges = get_ordered_circles(edges=unvisited_edges)
+            circle_list.append(circle_edges)
+
+        return circle_list
+
+    def get_ordered_circles(edges):
+        if not edges:
+            return [], []
+
+        circle_edges = [edges[0]]
+        unvisited_edges = edges[1:]
+
+        while len(circle_edges) < len(edges):
+            nothing = True
+
+            for edge in edges:
+                if edge in circle_edges or (edge[1], edge[0]) in circle_edges:
+                    continue
+
+                if edge[0] == circle_edges[-1][1]:
+                    circle_edges.append(edge)
+                    unvisited_edges.remove(edge)
+                    nothing = False
+                elif edge[1] == circle_edges[-1][1]:
+                    circle_edges.append((edge[1], edge[0]))
+                    unvisited_edges.remove(edge)
+                    nothing = False
+
+            if nothing:
+                break
+
+        return circle_edges, unvisited_edges
+
+    assert alpha > 0, "alpha value has to be greater than zero"
+
+    # algorithm needs at least four points
+    if points.shape[0] <= 3:
+        boundary_points = points.tolist()
+        boundary_points.append(boundary_points[0])
+        return boundary_points
+
+    edges = []
+    triangulation = Delaunay(points)
+
+    # loop over all Delaunay triangles:
+    # index_a, index_b, index_c = indices of the corner points of the triangle
+    for index_a, index_b, index_c in triangulation.vertices:
+        point_a = points[index_a]
+        point_b = points[index_b]
+        point_c = points[index_c]
+
+        # computing radius of triangle circum circle:
+        # lengths of sides of triangle
+        a = np.linalg.norm(point_a - point_b)
+        b = np.linalg.norm(point_b - point_c)
+        c = np.linalg.norm(point_c - point_a)
+
+        # semi perimeter of triangle
+        s = (a + b + c) / 2.0
+
+        # area of triangle by Heron's formula
+        area = np.sqrt(s * (s - a) * (s - b) * (s - c))
+
+        # radius of triangle circum circle
+        circum_r = a * b * c / (4.0 * (area + 1e-8))
+
+        if circum_r < alpha:
+            if (index_a, index_b) in edges:
+                edges.remove((index_a, index_b))
+            elif (index_b, index_a) in edges:
+                edges.remove((index_b, index_a))
+            else:
+                edges.append((index_a, index_b))
+
+            if (index_b, index_c) in edges:
+                edges.remove((index_b, index_c))
+            elif (index_c, index_b) in edges:
+                edges.remove((index_c, index_b))
+            else:
+                edges.append((index_b, index_c))
+
+            if (index_c, index_a) in edges:
+                edges.remove((index_c, index_a))
+            elif (index_a, index_c) in edges:
+                edges.remove((index_a, index_c))
+            else:
+                edges.append((index_c, index_a))
+
+    boundaries = get_ordered_boundaries(edges=edges)
+
+    # no boundary edges or
+    # boundary with several distant circles / several circles intersecting each other in one point
+    if boundaries == [[]] or len(boundaries) > 1:
+        print("alpha value not suitable -> is increased")
+        return alpha_shape(points=points, alpha=alpha + alpha * 0.2)
+
+    # boundary with several circles intersecting each other in one point
+    edge_list = [j for i in boundaries[0] for j in i]
+    edge_counter = Counter(edge_list)
+
+    for edge in edge_counter:
+        if edge_counter[edge] > 2:
+            print("alpha value not suitable -> is increased")
+            return alpha_shape(points, alpha=alpha + alpha * 0.2)
+
+    edges = boundaries[0]
+    boundary_points = []
+
+    # get the coordinates of the ordered edge vertices
+    for edge in edges:
+        boundary_points.append(points[edge[0]].tolist())
+    boundary_points.append(boundary_points[0])
+
+    return boundary_points
 
 
 def polygon_clip(poly, clip_poly):
