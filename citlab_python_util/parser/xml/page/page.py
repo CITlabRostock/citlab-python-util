@@ -484,6 +484,12 @@ class Page:
             # cls.set_custom_attr(tl_nd, "structure", "id", tl.get_article_id())
             # cls.set_custom_attr(tl_nd, "structure", "type", "article")
 
+    def add_region(self, region):
+        # TODO: Check if region with same ID already exists and if region is overlapping with other regions
+        page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
+        region_nd = region.to_page_xml_node()
+        page_nd.append(region_nd)
+
     def set_text_regions(self, text_regions, overwrite=False):
         # TODO: Define behaviour for overwrite=False
         if overwrite:
