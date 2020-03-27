@@ -130,63 +130,63 @@ class TextRegion(Region):
 
 
 class ImageRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sIMAGEREGION)
 
 
 class LineDrawingRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sLINEDRAWINGREGION)
 
 
 class GraphicRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sGRAPHICREGION)
 
 
 class TableRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sTABLEREGION)
 
 
 class ChartRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sCHARTREGION)
 
 
 class SeparatorRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sSEPARATORREGION)
 
 
 class MathsRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sMATHSREGION)
 
 
 class ChemRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sCHEMREGION)
 
 
 class MusicRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sMUSICREGION)
 
 
 class AdvertRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sADVERTREGION)
 
 
 class NoiseRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sNOISEREGION)
 
 
 class UnknownRegion(Region):
-    def __init__(self, _id, custom, points):
-        super().__init__(_id, custom, points)
+    def __init__(self, _id, custom=None, points=None):
+        super().__init__(_id, custom, points, node_string=page_const.sUNKNOWNREGION)
 
 
 class TextLine:
