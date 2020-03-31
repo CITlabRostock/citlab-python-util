@@ -155,6 +155,7 @@ def toggle_view(event, views):
               "\ti: toggle image\n"
               "\tb: toggle baselines\n"
               "\tp: toggle surrounding polygons\n"
+              "\tw: toggle world polygons\n"
               "\tr: toggle all regions\n"
               "\t\t1: TextRegion\n"
               "\t\t2: SeparatorRegion\n"

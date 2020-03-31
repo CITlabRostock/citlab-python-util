@@ -484,9 +484,26 @@ class Page:
             # cls.set_custom_attr(tl_nd, "structure", "id", tl.get_article_id())
             # cls.set_custom_attr(tl_nd, "structure", "type", "article")
 
-    def add_region(self, region):
-        # TODO: Check if region with same ID already exists and if region is overlapping with other regions
+    def add_region(self, region, overwrite=False):
+        # TODO: Check if region is overlapping with other regions. Add reading order.
         page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
+
+        region_id = region.id
+        existent_region_nds = self.get_child_by_id(page_nd, region_id)
+
+        region_nd = None
+        if len(existent_region_nds) > 0:
+            if overwrite:
+                print(f"Region with id {region_id} already existent, overwriting.")
+                for existent_region_nd in existent_region_nds:
+                    self.remove_page_xml_node(existent_region_nd)
+                region_nd = region.to_page_xml_node()
+                page_nd.append(region_nd)
+            else:
+                print(f"Region with id {region_id} already existent, skipping.")
+        if region_nd is not None:
+            page_nd.append(region_nd)
+
         region_nd = region.to_page_xml_node()
         page_nd.append(region_nd)
 
