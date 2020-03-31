@@ -504,9 +504,6 @@ class Page:
         if region_nd is not None:
             page_nd.append(region_nd)
 
-        region_nd = region.to_page_xml_node()
-        page_nd.append(region_nd)
-
     def set_text_regions(self, text_regions, overwrite=False):
         # TODO: Define behaviour for overwrite=False
         if overwrite:
