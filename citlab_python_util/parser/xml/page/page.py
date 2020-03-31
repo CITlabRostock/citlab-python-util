@@ -498,9 +498,10 @@ class Page:
                 for existent_region_nd in existent_region_nds:
                     self.remove_page_xml_node(existent_region_nd)
                 region_nd = region.to_page_xml_node()
-                page_nd.append(region_nd)
             else:
                 print(f"Region with id {region_id} already existent, skipping.")
+        else:
+            region_nd = region.to_page_xml_node()
         if region_nd is not None:
             page_nd.append(region_nd)
 
