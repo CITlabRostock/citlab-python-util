@@ -494,12 +494,12 @@ class Page:
         region_nd = None
         if len(existent_region_nds) > 0:
             if overwrite:
-                logger.debug(f"Region with id {region_id} already existent, overwriting.")
+                logger.debug("Region with id {} already existent, overwriting.".format(region_id))
                 for existent_region_nd in existent_region_nds:
                     self.remove_page_xml_node(existent_region_nd)
                 region_nd = region.to_page_xml_node()
             else:
-                logger.debug(f"Region with id {region_id} already existent, skipping.")
+                logger.debug("Region with id {} already existent, skipping.".format(region_id))
         else:
             region_nd = region.to_page_xml_node()
         if region_nd is not None:
