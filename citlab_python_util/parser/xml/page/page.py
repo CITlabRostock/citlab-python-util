@@ -7,7 +7,9 @@ from argparse import ArgumentParser
 import cssutils
 from lxml import etree
 
-from citlab_python_util.parser.xml.page.page_objects import *
+import citlab_python_util.parser.xml.page.page_constants as page_const
+from citlab_python_util.parser.xml.page import page_util
+from citlab_python_util.parser.xml.page.page_objects import TextLine, TextRegion, REGIONS_DICT, Word
 
 # Make sure that the css parser for the custom attribute doesn't spam "WARNING Property: Unknown Property name."
 cssutils.log.setLevel(logging.ERROR)
@@ -392,12 +394,15 @@ class Page:
         if len(text_region_nds) > 0:
             for text_region in text_region_nds:
                 text_region_id = text_region.get("id")
+                text_region_type = text_region.get("type") if text_region.get(
+                    "type") is not None else page_const.TextRegionTypes.sPARAGRAPH
                 text_region_custom_attr = self.parse_custom_attr(text_region.get(page_const.sCUSTOM_ATTR))
                 text_region_coords = self.get_point_list(
                     self.get_child_by_name(text_region, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
                 text_region_text_lines = self.get_textlines(text_region)
 
-                tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords, text_region_text_lines)
+                tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords, text_region_text_lines,
+                                text_region_type)
                 res.append(tr)
 
         return res
