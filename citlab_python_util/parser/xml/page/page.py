@@ -121,7 +121,7 @@ class Page:
         # But too complex stuff so, I simply add a 'Z'
         nd_last_change.text = datetime.datetime.utcnow().isoformat() + "Z"
         if comments is not None:
-            if not nd_comments:  # we need to add one!
+            if nd_comments is None:  # we need to add one!
                 nd_comments = etree.SubElement(nd_metadata, page_const.sCOMMENTS_ELT)
             nd_comments.text = comments
         return nd_metadata
