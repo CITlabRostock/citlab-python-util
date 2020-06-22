@@ -407,6 +407,21 @@ class Page:
 
         return res
 
+    def remove_regions(self, region_type):
+        if region_type not in REGIONS_DICT:
+            logger.info("There is no region with type {}, skipping.".format(region_type))
+            return
+
+        r_nds = self.get_child_by_name(self.page_doc, region_type)
+        if len(r_nds) == 0:
+            logger.info("No regions with of type {} found in this PAGE file.".format(region_type))
+            return
+
+        logger.info("Removing all regions of type {}.".format(region_type))
+        for r_nd in r_nds:
+            self.remove_page_xml_node(r_nd)
+
+
     def get_regions(self):
         res = {}
         for r_name in REGIONS_DICT.keys():
