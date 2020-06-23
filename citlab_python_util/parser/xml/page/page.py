@@ -421,7 +421,6 @@ class Page:
         for r_nd in r_nds:
             self.remove_page_xml_node(r_nd)
 
-
     def get_regions(self):
         res = {}
         for r_name in REGIONS_DICT.keys():

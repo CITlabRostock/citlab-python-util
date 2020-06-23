@@ -9,7 +9,7 @@ from citlab_python_util.math.rounding import round_to_nearest_integer
 class Polygon(object):
 
     def __init__(self, x_points=None, y_points=None, n_points=0):
-        """ Constructs a new polygon.
+        """ Constructs a new polygon. If x_points/y_points hold floats, these are converted to integers.
 
         :param x_points: list of x coordinates of the polygon
         :type x_points: list of int
@@ -21,6 +21,8 @@ class Polygon(object):
         :type bounds: Rectangle
         """
         if x_points is not None:
+            if type(x_points) == list and all(type(x) == float for x in x_points):
+                x_points = [int(x) for x in x_points]
             assert type(x_points) == list, "x_points has to be a list of ints"
             assert all(type(x) == int for x in x_points), "x_points has to be a list of ints"
             if n_points > len(x_points) or n_points > len(y_points):
@@ -31,6 +33,8 @@ class Polygon(object):
             self.x_points = []
 
         if y_points is not None:
+            if type(y_points) == list and all(type(y) == float for y in y_points):
+                y_points = [int(y) for y in y_points]
             assert type(y_points) == list, "y_points has to be a list of ints"
             assert all(type(y) == int for y in y_points), "y_points has to be a list of ints"
             if n_points > len(x_points) or n_points > len(y_points):
