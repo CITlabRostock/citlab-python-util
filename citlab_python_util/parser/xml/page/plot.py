@@ -512,14 +512,19 @@ if __name__ == '__main__':
     #             fill_regions=True)
     # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True)
 
-    path_to_img_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/image_paths_errors.lst"
-    path_to_hyp_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/xml_paths_errors.lst"
-    path_to_gt_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/Delivered_results/xml_paths_errors.lst"
+    path_to_img_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/image_paths.lst"
+    path_to_hyp_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/xml_paths.lst"
+    path_to_gt_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/Delivered_results/xml_paths.lst"
 
     # path_to_img_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/lists/train_img.lst'
     # path_to_hyp_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/hyp/200206_LA_newspaper_onb_corrected/train_hyp.lst'
     # path_to_gt_lst = None
 
-    plot_list(path_to_img_lst, path_to_hyp_lst, gt_lst=None, plot_article=False, plot_legend=False)
+    # plot_list(path_to_img_lst, path_to_hyp_lst, gt_lst=None, plot_article=False, plot_legend=False)
+    # plot_folder("/home/max/Documents/newseye/ida_test/examples", False, False)
+    # plot_folder("/home/max/data/la/textblock_detection/luxemburger_wort/885890_newspaper_luxwort_1877-01-29", False, False)
+    # plot_folder("/home/max/bin/TessseractToPAGE 4.0/input_output", False, True)
+    # plot_folder("/home/max/data/la/textblock_detection/GBNLA/training-GBNv1/KolonieZeitung/train", False, True)
+    plot_folder("/home/max/complex_pages_test_gt", False, True)
 
     plt.show()
