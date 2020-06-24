@@ -64,6 +64,9 @@ class Region:
         self.custom = custom
         self.node_string = node_string
 
+    def set_points(self, points):
+        self.points = Points(points)
+
     def to_page_xml_node(self):
         region_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, self.node_string))
         region_nd.set('id', str(self.id))
