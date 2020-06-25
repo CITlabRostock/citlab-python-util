@@ -32,7 +32,10 @@ def string_to_points(s):
 
 class Points:
     def __init__(self, points_list):
-        self.points_list = points_list
+        if type(points_list[0][0]) == float:
+            self.points_list = [(int(x), int(y)) for x,y in points_list]
+        else:
+            self.points_list = points_list
 
     def to_string(self):
         """Convert self.points_list to a PageXml valid format:
