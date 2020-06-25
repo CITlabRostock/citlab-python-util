@@ -388,6 +388,9 @@ class Page:
 
         return ps_coords
 
+    def get_ids(self):
+        return self.page_doc.xpath("//@id")
+
     def get_text_regions(self):
         text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
         res = []
