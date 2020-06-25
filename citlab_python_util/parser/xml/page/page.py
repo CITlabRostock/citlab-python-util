@@ -426,7 +426,8 @@ class Page:
         for r_name in REGIONS_DICT.keys():
             if r_name == page_const.sTEXTREGION:
                 text_regions = self.get_text_regions()
-                res[r_name] = text_regions if len(text_regions) > 0
+                if len(text_regions) > 0:
+                    res[r_name] = text_regions
                 continue
             r_nds = self.get_child_by_name(self.page_doc, r_name)
             if len(r_nds) > 0:
