@@ -389,7 +389,25 @@ class Page:
         return ps_coords
 
     def get_ids(self):
+        """
+        Return a list of all current ids used in the PAGE object.
+        :return: list of ids
+        """
         return self.page_doc.xpath("//@id")
+
+    def get_unique_id(self, page_object_name):
+        """
+        For a specific page object with name `page_object_name` (e.g. TextRegion or TextLine) find an ID that is not
+        already taken. The new ID has the format `{page_object_name}_[1-9][0-9]*`
+        :param page_object_name: type of the page object, e.g. TextRegion or TextLine
+        :return: a unique ID for the Page object
+        """
+        existing_ids = self.get_ids()
+        for i in range(1000):
+            new_id = page_object_name + "_" + str(i + 1)
+            if new_id not in existing_ids:
+                return new_id
+        return None
 
     def get_text_regions(self):
         text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
