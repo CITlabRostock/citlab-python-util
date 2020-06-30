@@ -37,7 +37,6 @@ class Page:
             logger.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
             # exit(1)
         self.metadata = self.get_metadata()
-        self.textlines = self.get_textlines()
 
     # =========== SCHEMA ===========
 
@@ -338,7 +337,8 @@ class Page:
 
     def get_article_dict(self):
         article_dict = {}
-        for tl in self.textlines:
+        text_lines = self.get_textlines()
+        for tl in text_lines:
             a_id = tl.get_article_id()
             if a_id in article_dict:
                 article_dict[a_id].append(tl)
