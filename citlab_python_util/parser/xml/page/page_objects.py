@@ -233,6 +233,12 @@ class TextLine:
 
         return text_line_nd
 
+    def set_points(self, points):
+        self.points = Points(points)
+
+    def set_baseline(self, baseline):
+        self.baseline = Points(baseline) if baseline is not None else None
+
     def get_reading_order(self):
         try:
             return self.custom["readingOrder"]["index"]
