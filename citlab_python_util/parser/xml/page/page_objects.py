@@ -234,7 +234,7 @@ class TextLine:
         return text_line_nd
 
     def set_points(self, points):
-        self.points = Points(points)
+        self.surr_p = Points(points)
 
     def set_baseline(self, baseline):
         self.baseline = Points(baseline) if baseline is not None else None
