@@ -1,10 +1,24 @@
 import os
 
+import PIL
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import interpolation as inter
-import PIL
+
+
+def get_scaling_factor(image_height, image_width, scaling_factor, fixed_height=None, fixed_width=None):
+    if fixed_height is not None and scaling_factor is not None and 0.1 < scaling_factor:
+        return scaling_factor * fixed_height / image_height
+    if fixed_width is not None and scaling_factor is not None and 0.1 < scaling_factor:
+        return scaling_factor * fixed_width / image_width
+    if fixed_height:
+        return fixed_height / image_height
+    if fixed_width:
+        return fixed_width / image_width
+    if scaling_factor:
+        return scaling_factor
+
 
 def get_image_dimensions(image_path):
     """
@@ -13,6 +27,7 @@ def get_image_dimensions(image_path):
     :return: (width, height) of image
     """
     return PIL.Image.open(image_path).size
+
 
 def get_rotation_angle(image, delta=0.1, limit=2):
     def find_score(arr, angle):
