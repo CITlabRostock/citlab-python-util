@@ -4,7 +4,15 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import interpolation as inter
+import PIL
 
+def get_image_dimensions(image_path):
+    """
+    Get width and height of the image given by `image_path`.
+    :param image_path: path to the image
+    :return: (width, height) of image
+    """
+    return PIL.Image.open(image_path).size
 
 def get_rotation_angle(image, delta=0.1, limit=2):
     def find_score(arr, angle):
