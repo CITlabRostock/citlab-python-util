@@ -609,7 +609,6 @@ class Page:
                                       attrib={"{" + page_const.NS_XSI + "}schemaLocation": page_const.XSILOCATION},
                                       # schema loc.
                                       nsmap={None: page_const.NS_PAGE_XML})  # Default ns
-        self.page_doc = etree.ElementTree(xml_page_root)
 
         metadata = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sMETADATA_ELT))
         xml_page_root.append(metadata)
@@ -630,10 +629,11 @@ class Page:
 
         xml_page_root.append(page_node)
 
-        b_validate = self.validate(self.page_doc)
+        page_doc = etree.ElementTree(xml_page_root)
+        b_validate = self.validate(page_doc)
         assert b_validate, 'new file not validated by schema'
 
-        return page_node
+        return page_doc
 
     @classmethod
     def create_page_xml_node(cls, node_name):
