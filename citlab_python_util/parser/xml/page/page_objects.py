@@ -196,7 +196,7 @@ class UnknownRegion(Region):
 
 
 class TextLine:
-    def __init__(self, _id, custom=None, text=None, baseline=None, surr_p=None):
+    def __init__(self, _id, custom=None, text=None, baseline=None, surr_p=None, words=None):
         if _id is None:
             raise page_util.PageXmlException("Every TextLine must have a unique id.")
         self.id = _id  # unique id of textline (str)
@@ -205,6 +205,9 @@ class TextLine:
         self.baseline = Points(baseline) if baseline is not None else None  # baseline of textline (Points object)
         self.text = text if text is not None else ""  # text present in the textline
         self.surr_p = Points(surr_p) if surr_p is not None else None  # surrounding polygon of textline (Points object)
+        if words is None:
+            words = []
+        self.words = words
 
     def to_page_xml_node(self):
         text_line_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sTEXTLINE))
@@ -223,6 +226,10 @@ class TextLine:
             baseline_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sBASELINE))
             baseline_nd.set('points', self.baseline.to_string())
             text_line_nd.append(baseline_nd)
+
+        for word in self.words:
+            word_nd = word.to_page_xml_node()
+            text_line_nd.append(word_nd)
 
         if self.text is not None:
             text_equiv_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sTEXTEQUIV))
@@ -290,6 +297,31 @@ class Word:
         self.custom = custom  # custom attr holding information like reading order (dict of dicts)
         self.text = text if text is not None else ""  # text present in the textline
         self.surr_p = Points(surr_p) if surr_p is not None else None  # surrounding polygon of textline (Points object)
+
+    def to_page_xml_node(self):
+        word_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sWORD))
+        word_nd.set('id', str(self.id))
+        if self.custom:
+            word_nd.set('custom', page_util.format_custom_attr(self.custom))
+
+        if not self.surr_p:
+            raise page_util.PageXmlException("Can't convert to PAGE-XML node since no surrounding polygon is given.")
+
+        coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
+        coords_nd.set('points', self.surr_p.to_string())
+        word_nd.append(coords_nd)
+
+        if self.text is not None:
+            text_equiv_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sTEXTEQUIV))
+            unicode_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sUNICODE))
+            unicode_nd.text = self.text
+            text_equiv_nd.append(unicode_nd)
+            text_line_nd.append(text_equiv_nd)
+
+        return text_line_nd
+
+    def set_points(self, points):
+        self.surr_p = Points(points)
 
     def get_reading_order(self):
         try:
