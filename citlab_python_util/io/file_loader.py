@@ -34,3 +34,32 @@ def get_page_path(image_path, page_folder_name="page", append_extension=False):
     if append_extension:
         return os.path.join(dir_name, page_folder_name, image_name + ".xml")
     return os.path.join(dir_name, page_folder_name, os.path.splitext(image_name)[0] + ".xml")
+
+
+def load_list_file(path_to_list):
+    with open(path_to_list, "r") as f:
+        ret = f.readlines()
+    return [path.rstrip() for path in ret]
+
+
+def load_image(path_to_image, module="pil", mode="L"):
+    """
+    Load an image with different modules like pillow or opencv in different modes like a grey image or an RGB-image.
+    For now only grey images are supported.
+    :param path_to_image:
+    :param module: Load image with different modules, like OpenCV or PIL
+    :param mode: Load the image in different modes, like grey-image or RGB-image
+    :return:
+    """
+    if module.lower() == "pil":
+        from PIL import Image
+        return Image.open(path_to_image).convert(mode)
+
+    if module.lower() == "opencv":
+        import cv2
+        if mode == "L":
+            mode = cv2.IMREAD_GRAYSCALE
+            return cv2.imread(path_to_image, mode)
+
+
+

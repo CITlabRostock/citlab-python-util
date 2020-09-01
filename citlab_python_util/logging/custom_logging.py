@@ -1,7 +1,7 @@
 import logging
 
 level_dict = {"debug": logging.DEBUG,
-              "info": logging.DEBUG,
+              "info": logging.INFO,
               "warn": logging.WARNING,
               "warning": logging.WARNING,
               "err": logging.ERROR,
