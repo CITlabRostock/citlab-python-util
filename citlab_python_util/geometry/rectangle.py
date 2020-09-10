@@ -219,3 +219,11 @@ class Rectangle(object):
         else:
             return Rectangle(intersection.x - abs(intersection.width), intersection.y - abs(intersection.height),
                              abs(intersection.width), abs(intersection.height))
+
+    def rescale(self, scaling_factor):
+        if scaling_factor * self.width < 1 or scaling_factor * self.height < 1:
+            return None
+        self.x = int(scaling_factor * self.x)
+        self.y = int(scaling_factor * self.y)
+        self.width = int(scaling_factor * self.width)
+        self.height = int(scaling_factor * self.height)
