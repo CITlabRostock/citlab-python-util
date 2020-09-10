@@ -17,7 +17,6 @@ class StrokeWidthDistanceTransform(object):
 
     def distance_transform(self, img_file, norm=cv2.DIST_L2, mask=cv2.DIST_MASK_PRECISE):
         image = cv2.imread(img_file, cv2.IMREAD_GRAYSCALE)
-        print(image)
         if self._dark_on_bright:
             image = -image + 255  # invert black/white
         threshold, image = self.otsu_threshold(image)  # binarize (otsu)
