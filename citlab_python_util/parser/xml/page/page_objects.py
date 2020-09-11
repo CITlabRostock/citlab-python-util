@@ -283,9 +283,18 @@ class TextLine:
             self.custom["structure"]["type"] = "article"
         else:
             try:
-                self.custom.pop("structure")
+                self.custom['structure'].pop('id')
+                if not self.custom['structure']:
+                    self.custom.pop('structure')
             except KeyError:
                 pass
+
+    def set_structure_attribute(self, attribute_name, attribute):
+        try:
+            self.custom["structure"][attribute_name] = str(attribute)
+        except KeyError:
+            self.custom["structure"] = {}
+            self.custom["structure"][attribute_name] = str(attribute)
 
 
 class Word:
