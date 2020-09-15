@@ -506,6 +506,8 @@ class Page:
             word_surr_p = self.get_point_list(word)
             res.append(Word(word_id, word_custom_attr, word_text, word_surr_p))
 
+        return res
+
 
     def update_textlines(self):
         self.textlines = self.get_textlines()
