@@ -330,9 +330,9 @@ class Word:
             unicode_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sUNICODE))
             unicode_nd.text = self.text
             text_equiv_nd.append(unicode_nd)
-            text_line_nd.append(text_equiv_nd)
+            word_nd.append(text_equiv_nd)
 
-        return text_line_nd
+        return word_nd
 
     def set_points(self, points):
         self.surr_p = Points(points)
