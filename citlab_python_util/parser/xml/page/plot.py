@@ -486,11 +486,11 @@ def plot_folder(path_to_folder, plot_article=True, fill_regions=False):
 
 
 if __name__ == '__main__':
-    # path_to_img = "./test/resources/newseye_as_test_data/image_files/0033_nzz_18120804_0_0_a1_p1_1.tif"
-    # path_to_xml = "./test/resources/newseye_as_test_data/xml_files_hy/0033_nzz_18120804_0_0_a1_p1_1.xml"
-    #
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True)
-    # plt.show()
+    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_232_textblocks/274952/ONB_krz_19110701_corrected_duplicated/page/ONB_krz_19110701_015.xml"
+    path_to_img = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_232_textblocks/274952/ONB_krz_19110701_corrected_duplicated/ONB_krz_19110701_015.jpg"
+
+    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
+    plt.show()
 
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
@@ -512,14 +512,14 @@ if __name__ == '__main__':
     #             fill_regions=True)
     # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True)
 
-    path_to_img_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/image_paths_errors.lst"
-    path_to_hyp_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/xml_paths_errors.lst"
-    path_to_gt_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/Delivered_results/xml_paths_errors.lst"
+    # path_to_img_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/image_paths_errors.lst"
+    # path_to_hyp_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/xml_paths_errors.lst"
+    # path_to_gt_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/Delivered_results/xml_paths_errors.lst"
 
     # path_to_img_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/lists/train_img.lst'
     # path_to_hyp_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/hyp/200206_LA_newspaper_onb_corrected/train_hyp.lst'
     # path_to_gt_lst = None
 
-    plot_list(path_to_img_lst, path_to_hyp_lst, gt_lst=None, plot_article=False, plot_legend=False)
-
-    plt.show()
+    # plot_list(path_to_img_lst, path_to_hyp_lst, gt_lst=None, plot_article=False, plot_legend=False)
+    #
+    # plt.show()

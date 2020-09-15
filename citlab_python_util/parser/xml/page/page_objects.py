@@ -257,7 +257,12 @@ class TextLine:
         try:
             return self.custom["structure"]["id"] if self.custom["structure"]["type"] == "article" else None
         except KeyError:
-            # print("Article ID missing.")
+            return None
+
+    def get_semantic_type(self):
+        try:
+            return self.custom["structure"]["semantic_type"]
+        except KeyError:
             return None
 
     def set_reading_order(self, reading_order):
