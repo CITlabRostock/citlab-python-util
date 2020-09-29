@@ -4,9 +4,7 @@ import sys
 from collections import OrderedDict
 
 
-# =========================
-# Extension of tf.app.flags
-# =========================
+# Lightweight argparse wrapper
 
 
 class LineArgumentParser(argparse.ArgumentParser):
