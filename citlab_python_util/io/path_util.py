@@ -1,5 +1,15 @@
 import os
 import re
+import glob
+
+
+def get_path_from_exportdir(model_dir, pattern, not_pattern):
+    export_dir = os.path.join(model_dir, "export")
+    name = [x for x in glob.glob1(export_dir, pattern) if not_pattern not in x]
+    if len(name) == 1:
+        return os.path.join(export_dir, name[0])
+    else:
+        raise IOError(f"Found {len(name)} '{pattern}' files in {export_dir}, there must be exact one.")
 
 
 def get_img_from_page_path(page_path):
