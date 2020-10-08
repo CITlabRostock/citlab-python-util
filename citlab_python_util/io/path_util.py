@@ -62,3 +62,12 @@ def get_page_from_json_path(json_path):
     if not os.path.isfile(page_path):
         raise IOError("No pagexml file found to given json file ", json_path)
     return page_path
+
+
+def prepend_folder_name(file_path):
+    folder_path = os.path.dirname(file_path)
+    folder_name = os.path.basename(folder_path)
+    file_name = os.path.basename(file_path)
+    new_file_name = folder_name + "_" + file_name
+
+    return os.path.join(folder_path, new_file_name)
