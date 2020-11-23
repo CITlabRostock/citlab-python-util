@@ -486,8 +486,8 @@ def plot_folder(path_to_folder, plot_article=True, fill_regions=False):
 
 
 if __name__ == '__main__':
-    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_232_textblocks/274952/ONB_krz_19110701_corrected_duplicated/page/ONB_krz_19110701_015.xml"
-    path_to_img = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_232_textblocks/274952/ONB_krz_19110701_corrected_duplicated/ONB_krz_19110701_015.jpg"
+    path_to_xml = "/home/johannes/devel/projects/tf_rel/test.xml"
+    path_to_img = "/home/johannes/devel/projects/tf_rel/test.jpg"
 
     plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
     plt.show()

@@ -74,6 +74,13 @@ def get_page_from_json_path(json_path):
     return page_path
 
 
+def get_page_from_conf_path(json_path):
+    page_path = re.sub(r'/confidences/([-\w.]+)_confidences\.json$', r'/page/\1.xml', json_path)
+    if not os.path.isfile(page_path):
+        raise IOError("No pagexml file found to given (confidence) json file ", json_path)
+    return page_path
+
+
 def prepend_folder_name(file_path):
     folder_path = os.path.dirname(file_path)
     folder_name = os.path.basename(folder_path)
