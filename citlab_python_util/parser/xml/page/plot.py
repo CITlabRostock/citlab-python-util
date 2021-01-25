@@ -275,7 +275,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
     plt.connect('key_press_event', lambda event: toggle_view(event, views))
 
 
-def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True, fill_regions=False,
+def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=False, fill_regions=False,
                  use_page_image_resolution=False):
     if type(page) == str:
         page = Page(page)
@@ -350,7 +350,7 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=True
             fill_regions=fill_regions, height=page_height, width=page_width)
 
 
-def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_names=True, plot_legend=False,
+def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=False, force_equal_names=True,
               fill_regions=False, use_page_image_resolution=False):
     if not img_lst:
         print(f"No valid image list found: '{img_lst}'.")
@@ -457,39 +457,37 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, force_equal_name
                     plt.show()
 
 
-def plot_folder(path_to_folder, plot_article=True, fill_regions=False):
+def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regions=False):
+    file_paths = []
     try:
-        _, dirnames, filenames = next(os.walk(path_to_folder))
+        for root, dirs, files in os.walk(path_to_folder):
+            file_paths += [os.path.join(root, file) for file in files]
     except StopIteration:
-        print(f"No directory {path_to_folder} found.")
-        exit(1)
-    if not any(fname.endswith((".jpg", ".png", ".tif")) for fname in filenames):
-        print("There are no images (jpg, png, tif) in this directory, choose another folder.")
-        exit(1)
+        raise ValueError(f"No directory {path_to_folder} found.")
+    if not any(fname.endswith((".jpg", ".png", ".tif")) for fname in file_paths):
+        raise ValueError("There are no images (jpg, png, tif) to be found, choose another folder.")
+
     page_folder = "page"
-    if not any(page_folder == dirname.lower() for dirname in dirnames):
-        print("There is no 'page' subdirectory in this directory, choose another folder.")
-        page_folder = None
-        # exit(1)
-
     # Iterate over the images
-    for img_fname in [img_fname for img_fname in filenames if img_fname.endswith((".jpg", ".png", ".tif"))]:
-        path_to_img = os.path.join(path_to_folder, img_fname)
-        path_to_page = None
-        if page_folder:
-            path_to_page = os.path.join(path_to_folder, page_folder, re.sub(r"\..*$", ".xml", img_fname))
+    for img_path in [path for path in file_paths if path.endswith((".jpg", ".png", ".tif"))]:
+        img_name = os.path.basename(img_path)
+        img_dir = os.path.dirname(img_path)
+        page_dir = os.path.join(img_dir, page_folder)
+        if not os.path.isdir(page_dir):
+            raise ValueError("There is no 'page' subdirectory to be found, choose another folder.")
+        page_path = os.path.join(page_dir, re.sub(r"\..*$", ".xml", img_name))
 
-        # fig, ax = plt.subplots()
-        plot_pagexml(path_to_page, path_to_img, ax=None, plot_article=plot_article, fill_regions=fill_regions)
+        plot_pagexml(Page(page_path), img_path, plot_article=plot_article, plot_legend=plot_legend,
+                     fill_regions=fill_regions)
         plt.show()
 
 
 if __name__ == '__main__':
-    path_to_xml = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/page/576455_0004_23676310.xml"
-    path_to_img = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/576455_0004_23676310.jpg"
-
-    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
-    plt.show()
+    # path_to_xml = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/page/576455_0004_23676310.xml"
+    # path_to_img = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/576455_0004_23676310.jpg"
+    #
+    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
+    # plt.show()
 
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
@@ -497,9 +495,8 @@ if __name__ == '__main__':
     #
     # plot_list(path_to_img_lst, path_to_hyp_lst, None, plot_article=True, force_equal_names=True)
 
-    # path_to_folder = "/home/max/data/as/NewsEye_ONB_Data/136358/ONB_aze_18950706"
-    # path_to_folder = "/home/max/devel/tests/la_comparison_newspapers/tmp/tmp"
-    # plot_folder(path_to_folder)
+    path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt"
+    plot_folder(path_to_folder, plot_legend=True)
 
     # path_to_xml = "/home/max/alto_convert_example/1877-01-05_01-00001.xml"
     # path_to_img = "/home/max/alto_convert_example/1877-01-05_01-00001.tif"
