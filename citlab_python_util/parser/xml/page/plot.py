@@ -160,11 +160,10 @@ def toggle_view(event, views):
               "\t\t1: TextRegion\n"
               "\t\t2: SeparatorRegion\n"
               "\t\t3: GraphicRegion\n"
-              "\t\t3: ImageRegion\n"
-              "\t\t4: TableRegion\n"
-              "\t\t5: AdvertRegion\n"
-              "\t\t6: LineDrawingRegion\n"
-              "\t\t7: ChartRegion / ChemRegion / MathsRegion / MusicRegion\n"
+              "\t\t4: ImageRegion\n"
+              "\t\t5: TableRegion\n"
+              "\t\t6: AdvertRegion\n"
+              "\t\t7: LineDrawingRegion / ChartRegion / ChemRegion / MathsRegion / MusicRegion\n"
               "\t\t8: NoiseRegion\n"
               "\t\t9: UnknownRegion\n"
               "\tn: next image\n"
@@ -486,8 +485,8 @@ def plot_folder(path_to_folder, plot_article=True, fill_regions=False):
 
 
 if __name__ == '__main__':
-    path_to_xml = "/home/johannes/devel/projects/tf_rel/test.xml"
-    path_to_img = "/home/johannes/devel/projects/tf_rel/test.jpg"
+    path_to_xml = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/page/576455_0004_23676310.xml"
+    path_to_img = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/576455_0004_23676310.jpg"
 
     plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
     plt.show()
