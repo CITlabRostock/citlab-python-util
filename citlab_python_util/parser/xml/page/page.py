@@ -89,11 +89,21 @@ class Page:
         Parse the metadata of the PageXml DOM or of the given Metadata node
         return a Metadata object
         """
-        _, nd_creator, nd_created, nd_last_change, nd_comments = self._get_metadata_nodes()
+        _, nd_creator, nd_created, nd_last_change, nd_comments, nd_transkribus_meta = self._get_metadata_nodes()
+
+        if etree.QName(nd_comments.tag).localname == page_const.sTranskribusMetadata_ELT:
+            nd_transkribus_meta = nd_comments
+            nd_comments = None
+
+        transkribus_meta = None
+        if nd_transkribus_meta is not None:
+            transkribus_meta = self._get_transkribus_meta_from_nd(nd_transkribus_meta)
+
         return Metadata(nd_creator.text
                         , nd_created.text
                         , nd_last_change.text
-                        , nd_comments.text if nd_comments is not None else None)
+                        , nd_comments.text if nd_comments is not None else None
+                        , transkribus_meta)
 
     def set_metadata(self, creator, comments=None):
         """
@@ -175,8 +185,14 @@ class Page:
         nd4 = nd3.getnext()
         if nd4 is not None:
             if etree.QName(nd4.tag).localname not in [page_const.sCOMMENTS_ELT, page_const.sTranskribusMetadata_ELT]:
-                raise ValueError("PageXMl mal-formed Metadata: Comments element must be 4th element")
-        return dom_nd, nd1, nd2, nd3, nd4
+                raise ValueError("PageXMl mal-formed Metadata: Comments or TranskribusMetadata element must be 4th element")
+
+        nd5 = nd4.getnext() if nd4 is not None else None
+        if nd5 is not None:
+            if etree.QName(nd5.tag).localname != page_const.sTranskribusMetadata_ELT:
+                raise ValueError("PageXMl mal-formed Metadata: TranskribusMetadata element must be the 5th element")
+
+        return dom_nd, nd1, nd2, nd3, nd4, nd5
 
     # =========== XML STUFF ===========
     @classmethod
@@ -409,21 +425,30 @@ class Page:
                 return new_id
         return None
 
-    def get_text_regions(self):
+    def get_text_regions(self, text_region_type=None):
         text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
         res = []
         if len(text_region_nds) > 0:
             for text_region in text_region_nds:
+                text_region_nd_type = text_region.get('type')
+                if text_region_type is not None:
+                    if text_region_nd_type is None and not text_region_type == page_const.TextRegionTypes.sPARAGRAPH:
+                        continue
+                    elif text_region_nd_type is None and not text_region_type == page_const.TextRegionTypes.sPARAGRAPH:
+                        continue
+                    elif not text_region_nd_type == text_region_type:
+                        continue
                 text_region_id = text_region.get("id")
-                text_region_type = text_region.get("type") if text_region.get(
-                    "type") is not None else page_const.TextRegionTypes.sPARAGRAPH
+                tr_type = text_region_type if text_region_type is not None else page_const.TextRegionTypes.sPARAGRAPH
+                # text_region_type = text_region.get("type") if text_region.get(
+                #     "type") is not None else page_const.TextRegionTypes.sPARAGRAPH
                 text_region_custom_attr = self.parse_custom_attr(text_region.get(page_const.sCUSTOM_ATTR))
                 text_region_coords = self.get_point_list(
                     self.get_child_by_name(text_region, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
                 text_region_text_lines = self.get_textlines(text_region)
 
                 tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords, text_region_text_lines,
-                                text_region_type)
+                                tr_type)
                 res.append(tr)
 
         return res
@@ -695,6 +720,25 @@ class Page:
             f.write(etree.tostring(self.page_doc, pretty_print=True, encoding="UTF-8", standalone=True,
                                    xml_declaration=True).decode("utf-8"))
 
+    @staticmethod
+    def _get_transkribus_meta_from_nd(nd_transkribus_meta):
+        if nd_transkribus_meta is None:
+            return None
+
+        transkribus_meta = TranskribusMetadata(
+            docId=nd_transkribus_meta.get('docId'),
+            pageId=nd_transkribus_meta.get('pageId'),
+            pageNr=nd_transkribus_meta.get('pageNr'),
+            tsid=nd_transkribus_meta.get('tsid'),
+            status=nd_transkribus_meta.get('status'),
+            userId=nd_transkribus_meta.get('userId'),
+            imgUrl=nd_transkribus_meta.get('imgUrl'),
+            xmlUrl=nd_transkribus_meta.get('xmlUrl'),
+            imageId=nd_transkribus_meta.get('imageId')
+        )
+
+        return transkribus_meta
+
 
 # =========== METADATA OF PAGEXML ===========
 class Metadata:
@@ -714,11 +758,40 @@ class Metadata:
     </complexType>
     """
 
-    def __init__(self, creator, created, last_change, comments=None):
+    def __init__(self, creator, created, last_change, comments=None, transkribus_meta=None):
         self.Creator = creator  # a string
         self.Created = created  # a string
         self.LastChange = last_change  # a string
         self.Comments = comments  # None or a string
+        self.TranskribusMeta = transkribus_meta # None or TranskribusMetadata object
+
+class TranskribusMetadata:
+    """
+    <complexType name="TranskribusMetadataType">
+        <attribute name="docId" type="string"/>
+        <attribute name="pageId" type="string"/>
+        <attribute name="pageNr" type="integer"/>
+        <attribute name="tsid" type="string"/>
+        <attribute name="status" type="string"/>
+        <attribute name="userId" type="string"/>
+        <attribute name="imgUrl" type="anyURI"/>
+        <attribute name="xmlUrl" type="anyURI"/>
+        <attribute name="imageId" type="string"/>
+    </complexType>
+    """
+
+    def __init__(self, docId=None, pageId=None, pageNr=None, tsid=None, status=None, userId=None, imgUrl=None,
+                 xmlUrl=None, imageId=None):
+        self.docId = docId
+        self.pageId = pageId
+        self.pageNr = pageNr
+        self.tsid = tsid
+        self.status = status
+        self.userId = userId
+        self.imgUrl = imgUrl
+        self.xmlUrl = xmlUrl
+        self.imageId = imageId
+
 
 
 if __name__ == "__main__":
@@ -727,13 +800,22 @@ if __name__ == "__main__":
                         help="path to the PageXml file")
     flags = parser.parse_args()
 
-    page = Page(flags.path_to_xml)
+    path_to_xml = flags.path_to_xml
+    if path_to_xml == '':
+        path_to_xml = "/home/max/data/newseye/gt_data/trnskrbs_61381_nlf/330110/1895_06_01/page/330110_0001_13011771_old.xml"
 
-    text_region = page.get_text_regions()[1]
-    print("TextRegion: ", text_region)
-    page.set_text_regions([text_region], overwrite=True)
-    new_text_region = page.get_text_regions()[0]
-    print(new_text_region.custom)
+    print(path_to_xml)
+
+    page = Page(path_to_xml)
+
+    transkribus_metadata: TranskribusMetadata = page.metadata.TranskribusMeta
+    print("imageId = ", transkribus_metadata.imageId)
+
+    # text_region = page.get_text_regions()[1]
+    # print("TextRegion: ", text_region)
+    # page.set_text_regions([text_region], overwrite=True)
+    # new_text_region = page.get_text_regions()[0]
+    # print(new_text_region.custom)
 
     # print(page.get_article_dict())
 
