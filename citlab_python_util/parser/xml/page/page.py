@@ -120,7 +120,7 @@ class Page:
         The comments field is either updated or deleted.
         return the Metadata DOM node
         """
-        nd_metadata, nd_creator, nd_created, nd_last_change, nd_comments = self._get_metadata_nodes()
+        nd_metadata, nd_creator, nd_created, nd_last_change, nd_comments, nd_transkribus = self._get_metadata_nodes()
         # TODO: CHANGE nd_creator.text to something expressive/meaningful
         # if nd_creator.text and nd_creator.text != creator and ", modified by " + creator not in nd_creator.text:
         #     nd_creator.text += ", modified by " + creator
