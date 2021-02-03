@@ -91,7 +91,7 @@ class Page:
         """
         _, nd_creator, nd_created, nd_last_change, nd_comments, nd_transkribus_meta = self._get_metadata_nodes()
 
-        if etree.QName(nd_comments.tag).localname == page_const.sTranskribusMetadata_ELT:
+        if nd_comments is not None and etree.QName(nd_comments.tag).localname == page_const.sTranskribusMetadata_ELT:
             nd_transkribus_meta = nd_comments
             nd_comments = None
 

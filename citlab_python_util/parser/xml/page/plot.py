@@ -14,6 +14,8 @@ from citlab_python_util.geometry.polygon import Polygon
 from citlab_python_util.parser.xml.page import page_constants
 from citlab_python_util.parser.xml.page.page import Page
 
+from matplotlib.pyplot import *
+
 # Use the default color (black) for the baselines belonging to no article
 DEFAULT_COLOR = 'k'
 
@@ -326,7 +328,9 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=Fals
                    page_constants.sLINEDRAWINGREGION: "salmon", page_constants.sCHARTREGION: "brown",
                    page_constants.sCHEMREGION: "navy", page_constants.sMATHSREGION: "crimson",
                    page_constants.sNOISEREGION: "darkkhaki", page_constants.sMUSICREGION: "firebrick",
-                   page_constants.sUNKNOWNREGION: "darkorchid"}
+                   page_constants.sUNKNOWNREGION: "darkorchid", page_constants.TextRegionTypes.sHEADING: "crimson"}
+        region_dict[page_constants.sTEXTREGION] = page.get_text_regions(page_constants.TextRegionTypes.sPARAGRAPH)
+        region_dict[page_constants.TextRegionTypes.sHEADING] = page.get_text_regions(page_constants.TextRegionTypes.sHEADING)
         region_dict_polygons = {region_name: [region.points.points_list for region in regions] for region_name, regions
                                 in region_dict.items()}
 
@@ -483,39 +487,20 @@ def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regio
 
 
 if __name__ == '__main__':
-    # path_to_xml = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/page/576455_0004_23676310.xml"
-    # path_to_img = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/576455_0004_23676310.jpg"
-    #
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
-    # plt.show()
+    # Example for plotting folder
+    path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt"
+    plot_folder(path_to_folder, plot_legend=True)
 
+    # Example for plotting list (GT list can be omitted)
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
     # path_to_gt_lst = "./test/resources/newseye_as_test_data/gt_xml_paths.lst"
     #
-    # plot_list(path_to_img_lst, path_to_hyp_lst, None, plot_article=True, force_equal_names=True)
+    # plot_list(path_to_img_lst, path_to_hyp_lst, path_to_gt_lst, plot_article=True, force_equal_names=True)
 
-    path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt"
-    plot_folder(path_to_folder, plot_legend=True)
-
-    # path_to_xml = "/home/max/alto_convert_example/1877-01-05_01-00001.xml"
-    # path_to_img = "/home/max/alto_convert_example/1877-01-05_01-00001.tif"
+    # Example for plotting PAGE file
+    # path_to_xml = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/page/576455_0004_23676310.xml"
+    # path_to_img = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/576455_0004_23676310.jpg"
     #
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True, plot_legend=False,
-    #              use_page_image_resolution=True)
-
-    # plot_folder("/home/max/data/la/textblock_detection/training-GBNv1/DerGemeindebote/train/", plot_article=False,
-    #             fill_regions=True)
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=False, fill_regions=True)
-
-    # path_to_img_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/image_paths_errors.lst"
-    # path_to_hyp_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/IDA_results/xml_paths_errors.lst"
-    # path_to_gt_lst = "/home/max/Documents/newseye/Deliverables/D_2.4/IDA_Data_Test/Delivered_results/xml_paths_errors.lst"
-
-    # path_to_img_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/lists/train_img.lst'
-    # path_to_hyp_lst = '/home/max/data/la/racetrack_onb_corrected_baselines_train_val_test/hyp/200206_LA_newspaper_onb_corrected/train_hyp.lst'
-    # path_to_gt_lst = None
-
-    # plot_list(path_to_img_lst, path_to_hyp_lst, gt_lst=None, plot_article=False, plot_legend=False)
-    #
+    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
     # plt.show()
