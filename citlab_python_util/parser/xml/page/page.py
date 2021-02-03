@@ -703,7 +703,7 @@ class Page:
         """
         page_doc = etree.parse(path_to_xml, etree.XMLParser(remove_blank_text=True))
         if not self.validate(page_doc):
-            logger.warning(
+            logger.debug(
                 "PageXml is not valid according to the Page schema definition {}.".format(page_const.XSILOCATION))
 
         return page_doc
