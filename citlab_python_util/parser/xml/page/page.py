@@ -34,7 +34,7 @@ class Page:
                 self.create_metadata(page_const.sCREATOR, comments="Metadata entry was missing, added..")
 
         if not self.validate(self.page_doc):
-            logger.warning("File given by {} is not a valid PageXml file.".format(path_to_xml))
+            logger.debug("File given by {} is not a valid PageXml file.".format(path_to_xml))
             # exit(1)
         self.metadata = self.get_metadata()
         self.textlines = self.get_textlines()
