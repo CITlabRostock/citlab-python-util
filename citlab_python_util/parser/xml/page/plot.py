@@ -132,6 +132,7 @@ def toggle_view(event, views):
     _toggle_polys('w', 'word_polys')
     _toggle_polys('r', 'regions')
     _toggle_polys('1', page_constants.sTEXTREGION)
+    _toggle_polys('1', page_constants.TextRegionTypes.sHEADING)
     _toggle_polys('2', page_constants.sSEPARATORREGION)
     _toggle_polys('3', page_constants.sGRAPHICREGION)
     _toggle_polys('4', page_constants.sIMAGEREGION)
