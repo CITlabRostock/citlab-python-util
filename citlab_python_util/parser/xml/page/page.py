@@ -431,17 +431,10 @@ class Page:
         if len(text_region_nds) > 0:
             for text_region in text_region_nds:
                 text_region_nd_type = text_region.get('type')
-                if text_region_type is not None:
-                    if text_region_nd_type is None and not text_region_type == page_const.TextRegionTypes.sPARAGRAPH:
-                        continue
-                    elif text_region_nd_type is None and not text_region_type == page_const.TextRegionTypes.sPARAGRAPH:
-                        continue
-                    elif not text_region_nd_type == text_region_type:
-                        continue
+                tr_type = text_region_nd_type if text_region_nd_type is not None else page_const.TextRegionTypes.sPARAGRAPH
+                if text_region_type is not None and tr_type != text_region_type:
+                    continue
                 text_region_id = text_region.get("id")
-                tr_type = text_region_type if text_region_type is not None else page_const.TextRegionTypes.sPARAGRAPH
-                # text_region_type = text_region.get("type") if text_region.get(
-                #     "type") is not None else page_const.TextRegionTypes.sPARAGRAPH
                 text_region_custom_attr = self.parse_custom_attr(text_region.get(page_const.sCUSTOM_ATTR))
                 text_region_coords = self.get_point_list(
                     self.get_child_by_name(text_region, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))

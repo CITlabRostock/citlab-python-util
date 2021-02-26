@@ -489,19 +489,19 @@ def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regio
 
 if __name__ == '__main__':
     # Example for plotting folder
-    path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt"
-    plot_folder(path_to_folder, plot_legend=True)
+    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt"
+    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_BNF_184_updated_gt"
+    path_to_folder = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt"
+    plot_folder(path_to_folder, plot_legend=False)
 
     # Example for plotting list (GT list can be omitted)
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
     # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
     # path_to_gt_lst = "./test/resources/newseye_as_test_data/gt_xml_paths.lst"
-    #
     # plot_list(path_to_img_lst, path_to_hyp_lst, path_to_gt_lst, plot_article=True, force_equal_names=True)
 
     # Example for plotting PAGE file
-    # path_to_xml = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/page/576455_0004_23676310.xml"
-    # path_to_img = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt/576455/1876_12_11_duplicated/576455_0004_23676310.jpg"
-    #
+    # path_to_xml = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312037/ONB_nfp_18730705/page/ONB_nfp_18730705_001.xml"
+    # path_to_img = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312037/ONB_nfp_18730705/ONB_nfp_18730705_001.tif"
     # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
     # plt.show()
