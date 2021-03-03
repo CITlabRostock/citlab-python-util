@@ -216,7 +216,7 @@ class TextLine:
             text_line_nd.set('custom', page_util.format_custom_attr(self.custom))
 
         if not self.surr_p:
-            raise page_util.PageXmlException("Can't convert to PAGE-XML node since no surrounding polygon is given.")
+            raise page_util.PageXmlException(f"Can't convert to PAGE-XML node since no surrounding polygon is given ({self.id}).")
 
         coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
         coords_nd.set('points', self.surr_p.to_string())
@@ -319,7 +319,7 @@ class Word:
             word_nd.set('custom', page_util.format_custom_attr(self.custom))
 
         if not self.surr_p:
-            raise page_util.PageXmlException("Can't convert to PAGE-XML node since no surrounding polygon is given.")
+            raise page_util.PageXmlException(f"Can't convert to PAGE-XML node since no surrounding polygon is given ({self.id}).")
 
         coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
         coords_nd.set('points', self.surr_p.to_string())
