@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import logging
 from lxml import etree
 
 import citlab_python_util.parser.xml.page.page_constants as page_const
@@ -119,11 +120,12 @@ class TextRegion(Region):
 
         for text_line in self.text_lines:
             text_line_nd = text_line.to_page_xml_node()
-            region_nd.append(text_line_nd)
-            if region_text:
-                region_text = '\n'.join([region_text, text_line.text])
-            else:
-                region_text = text_line.text
+            if text_region_nd is not None:
+                region_nd.append(text_line_nd)
+                if region_text:
+                    region_text = '\n'.join([region_text, text_line.text])
+                else:
+                    region_text = text_line.text
 
         if region_text:
             text_equiv_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sTEXTEQUIV))
@@ -216,7 +218,8 @@ class TextLine:
             text_line_nd.set('custom', page_util.format_custom_attr(self.custom))
 
         if not self.surr_p:
-            raise page_util.PageXmlException(f"Can't convert to PAGE-XML node since no surrounding polygon is given ({self.id}).")
+            logging.warning(f"Can't convert TextLine to PAGE-XML node since no surrounding polygon is given ({self.id}).")
+            return None
 
         coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
         coords_nd.set('points', self.surr_p.to_string())
@@ -229,7 +232,8 @@ class TextLine:
 
         for word in self.words:
             word_nd = word.to_page_xml_node()
-            text_line_nd.append(word_nd)
+            if word_nd is not None:
+                text_line_nd.append(word_nd)
 
         if self.text is not None:
             text_equiv_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sTEXTEQUIV))
@@ -319,7 +323,8 @@ class Word:
             word_nd.set('custom', page_util.format_custom_attr(self.custom))
 
         if not self.surr_p:
-            raise page_util.PageXmlException(f"Can't convert to PAGE-XML node since no surrounding polygon is given ({self.id}).")
+            logging.warning(f"Can't convert Word to PAGE-XML node since no surrounding polygon is given ({self.id}).")
+            return None
 
         coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
         coords_nd.set('points', self.surr_p.to_string())
