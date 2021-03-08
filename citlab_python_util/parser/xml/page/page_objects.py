@@ -166,6 +166,12 @@ class SeparatorRegion(Region):
     def __init__(self, _id, custom=None, points=None):
         super().__init__(_id, custom, points, node_string=page_const.sSEPARATORREGION)
 
+    def get_orientation(self):
+        try:
+            return self.custom['structure']['orientation']
+        except KeyError:
+            return None
+
 
 class MathsRegion(Region):
     def __init__(self, _id, custom=None, points=None):
