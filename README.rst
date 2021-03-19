@@ -2,4 +2,4 @@
 citlab-python-util
 ==================
 
-General Python utility tools.
+Python utility tools: PAGE-XML, read&write, parse, plot, …
