@@ -592,9 +592,9 @@ class Page:
             text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)[0]
         else:
             text_region_nd = text_region
-        current_text_line_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
 
         if overwrite:
+            current_text_line_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
             for text_line_nd in current_text_line_nds:
                 self.remove_page_xml_node(text_line_nd)
 
