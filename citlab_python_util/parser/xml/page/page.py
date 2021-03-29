@@ -8,7 +8,7 @@ import cssutils
 from lxml import etree
 
 import citlab_python_util.parser.xml.page.page_constants as page_const
-from citlab_python_util.parser.xml.page import page_util
+from citlab_python_util.parser.xml.page import page_util, page_objects
 from citlab_python_util.parser.xml.page.page_objects import TextLine, TextRegion, REGIONS_DICT, Word
 
 # Make sure that the css parser for the custom attribute doesn't spam "WARNING Property: Unknown Property name."
@@ -588,7 +588,7 @@ class Page:
             page_nd.append(text_region_nd)
 
     def set_text_lines(self, text_region, text_lines, overwrite=False):
-        if type(text_region) == page_const.sTEXTREGION:
+        if type(text_region) == page_objects.TextRegion:
             text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)[0]
         else:
             text_region_nd = text_region
