@@ -588,7 +588,10 @@ class Page:
             page_nd.append(text_region_nd)
 
     def set_text_lines(self, text_region, text_lines, overwrite=False):
-        text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)
+        if type(text_region) == page_const.sTEXTREGION:
+            text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)[0]
+        else:
+            text_region_nd = text_region
         current_text_line_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
 
         if overwrite:
