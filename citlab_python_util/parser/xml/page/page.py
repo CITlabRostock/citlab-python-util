@@ -578,8 +578,8 @@ class Page:
     def set_text_regions(self, text_regions, overwrite=False):
         # TODO: Define behaviour for overwrite=False
         if overwrite:
-            text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
-            for text_region_nd in text_region_nds:
+            current_text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
+            for text_region_nd in current_text_region_nds:
                 self.remove_page_xml_node(text_region_nd)
 
         page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
@@ -588,10 +588,10 @@ class Page:
             page_nd.append(text_region_nd)
 
     def set_text_lines(self, text_region, text_lines, overwrite=False):
-        text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)
-        current_text_line_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
+        text_region_nd = self.get_child_by_id(self.page_doc, text_region.id)[0]
 
         if overwrite:
+            current_text_line_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
             for text_line_nd in current_text_line_nds:
                 self.remove_page_xml_node(text_line_nd)
 
