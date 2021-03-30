@@ -60,6 +60,58 @@ class PagePreProcessor:
                 f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found {redundant_textline_count} text line ids with multiple"
                 f" assigned text lines in page file '{self.page_path_list[self.current_batch_idx][i]}'")
 
+    def delete_border_textlines(self):
+        print(
+            f"Start deleting text lines not belonging to the main page (i.e., covering the margin of neighboring pages"
+            f" due to bad scans) for batch {self.current_batch_idx}..")
+        import time
+        start = time.time()
+        for i, page_object in enumerate(self.page_object_list):
+            textlines = page_object.get_textlines()
+            if len(textlines) == 0:
+                print(
+                    f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found no text lines in page file "
+                    f"'{self.page_path_list[self.current_batch_idx][i]}'")
+                continue
+
+            # sort text lines by the x-values (small to big)
+            textlines_from_left = sorted(textlines, key=lambda textline: min(textline.baseline.to_polygon().x_points))
+            textlines_from_right = sorted(textlines, key=lambda textline: max(textline.baseline.to_polygon().x_points))
+            # textlines = sorted(textlines, key=lambda textline: textline.baseline.points_list[0][0])
+
+            # Get the average textline length across the page
+            # avg_baseline_length = sum(
+            #     [max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for
+            #      textline in textlines])/len(textlines)
+            baseline_lengths_left = [max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for textline in textlines_from_left]
+            baseline_lengths_right = [max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for textline in textlines_from_right]
+            avg_baseline_length = sum(baseline_lengths_left)/len(textlines)
+
+            count_removed_textlines = 0
+            min_margin = 80
+            min_start_x = min_margin
+            for textline_l, baseline_length_l in zip(textlines_from_left, baseline_lengths_left):
+                textline_start_x = min(textline_l.baseline.to_polygon().x_points)
+                if textline_start_x >= min_start_x:
+                    break
+                if baseline_length_l < avg_baseline_length / 2:
+                    textline_nd = page_object.get_child_by_id(page_object.page_doc, textline_l.id)[0]
+                    page_object.remove_page_xml_node(textline_nd)
+                    count_removed_textlines += 1
+
+            max_end_x = page_object.get_image_resolution()[0] - min_margin
+            for textline_r, baseline_length_r in zip(textlines_from_right, baseline_lengths_right):
+                textline_end_x = max(textline_r.baseline.to_polygon().x_points)
+                if textline_end_x <= max_end_x:
+                    break
+                if baseline_length_r < avg_baseline_length / 2:
+                    textline_nd = page_object.get_child_by_id(page_object.page_doc, textline_r.id)[0]
+                    page_object.remove_page_xml_node(textline_nd)
+                    count_removed_textlines += 1
+
+            print(f"Removed {count_removed_textlines}")
+        print(f"Took {time.time() - start}")
+
     def save_page_files(self, overwrite=False, save_folder=None):
         """
             Saving the (modified) page files coming from the preprocessor. There are four cases for the tuple (`overwrite`, `save_folder`):
@@ -93,3 +145,9 @@ class PagePreProcessor:
                 path.mkdir(parents=True, exist_ok=True)
 
             page_object.write_page_xml(save_path)
+
+
+if __name__ == '__main__':
+    page_path_list = "/home/max/data/newseye/pipeline_datasets/nyh_data/12148_bpt6k4118689m/page_files.lst"
+    page_pre_proc = PagePreProcessor(page_path_list)
+    page_pre_proc.delete_border_textlines()
