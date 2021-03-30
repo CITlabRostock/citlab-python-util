@@ -4,7 +4,14 @@ from citlab_article_separation.gnn.input.feature_generation import discard_text_
 from tqdm import tqdm
 from argparse import ArgumentParser
 
-logging.getLogger().setLevel("DEBUG")
+logger = logging.getLogger()
+logger.setLevel("DEBUG")
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def run(page_path_list, overwrite):
@@ -14,7 +21,7 @@ def run(page_path_list, overwrite):
         text_regions = page.get_text_regions()
 
         for text_region in text_regions:
-            text_region_nd = page.get_child_by_id(page.page_doc, text_region.id)
+            # text_region_nd = page.get_child_by_id(page.page_doc, text_region.id)
             text_lines = []
             for text_line in text_region.text_lines:
                 text_line_nodes = page.get_child_by_id(page.page_doc, text_line.id)
