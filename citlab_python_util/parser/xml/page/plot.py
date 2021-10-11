@@ -51,7 +51,7 @@ COLORS = ["darkgreen", "red", "darkviolet", "darkblue",
 for color in COLORS_SORTED:
     if color not in COLORS:
         COLORS.append(color)
-COLORS = 5 * COLORS
+COLORS = 6 * COLORS
 
 
 # Two interfaces supported by matplotlib:
@@ -302,6 +302,10 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=Fals
         blines_list = [[textline.baseline.points_list for textline in article_dict[id] if textline.baseline]
                        for id in unique_ids]
 
+    # import random
+    # random.seed(1337)
+    # random.shuffle(bcolors)
+
     # elif None in article_dict:
     #     if plot_article:
     #         bcolors = COLORS[:len(article_dict) - 1] + [DEFAULT_COLOR]
@@ -465,7 +469,7 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=Fals
 def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regions=False):
     file_paths = []
     try:
-        for root, dirs, files in os.walk(path_to_folder):
+        for root, dirs, files in os.walk(path_to_folder, followlinks=True):
             file_paths += [os.path.join(root, file) for file in files]
     except StopIteration:
         raise ValueError(f"No directory {path_to_folder} found.")
@@ -489,10 +493,9 @@ def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regio
 
 if __name__ == '__main__':
     # Example for plotting folder
-    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_NLF_200_updated_gt"
-    # path_to_folder = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_BNF_184_updated_gt"
-    path_to_folder = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt"
-    plot_folder(path_to_folder, plot_legend=False)
+    # path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_BNF_183_updated_gt"
+    # path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt"
+    # plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regions=False)
 
     # Example for plotting list (GT list can be omitted)
     # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
@@ -500,8 +503,15 @@ if __name__ == '__main__':
     # path_to_gt_lst = "./test/resources/newseye_as_test_data/gt_xml_paths.lst"
     # plot_list(path_to_img_lst, path_to_hyp_lst, path_to_gt_lst, plot_article=True, force_equal_names=True)
 
-    # Example for plotting PAGE file
-    # path_to_xml = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312037/ONB_nfp_18730705/page/ONB_nfp_18730705_001.xml"
-    # path_to_img = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312037/ONB_nfp_18730705/ONB_nfp_18730705_001.tif"
-    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
-    # plt.show()
+    # # Example for plotting PAGE file
+    path_to_img = "/home/johannes/ONB_aze_19110701_008.jpg"
+    path_to_xml = "/home/johannes/ONB_aze_19110701_008.xml"
+    # path_to_xml = "/home/johannes/devel/576462_0001_23676323_clustering.xml"
+    # path_to_img = "/home/johannes/devel/576462_0001_23676323.jpg"
+    # # path_to_xml = "/home/johannes/devel/19200115_1-0001_clustering.xml"
+    # # path_to_img = "/home/johannes/devel/19200115_1-0001.jpg"
+    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
+    # save_path = "/home/johannes/devel/nlf.png"
+    # plt.axis('off')
+    # plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=300)
+    plt.show()
