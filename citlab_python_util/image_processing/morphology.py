@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 def apply_transform(img, transform_type=None, kernel_size=(4, 4), kernel_type='rect', iterations=1):
@@ -30,7 +33,8 @@ def apply_transform(img, transform_type=None, kernel_size=(4, 4), kernel_type='r
     kernel_dict = {'rect': cv2.MORPH_RECT, 'ellipse': cv2.MORPH_ELLIPSE, 'cross': cv2.MORPH_CROSS}
 
     if kernel_size == (0, 0) or transform_type is None:
-        print('Specify a kernel size and a transformation type to apply the transformation. Returning the image as is.')
+        logger.warning('Specify a kernel size and a transformation type to apply the transformation. '
+                       'Returning the image as is.')
         return img
     _transform_type = transform_dict[transform_type]
     _kernel_type = kernel_dict[kernel_type]

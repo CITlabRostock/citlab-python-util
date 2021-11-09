@@ -1,5 +1,4 @@
 import random
-
 from matplotlib import colors as mcolors
 
 # Define default color

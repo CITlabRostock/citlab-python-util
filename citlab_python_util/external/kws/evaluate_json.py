@@ -3,13 +3,14 @@ import json
 import os
 import re
 from copy import deepcopy
-
 import matplotlib.pyplot as plt
-
 from citlab_python_util.geometry.polygon import string_to_poly, are_vertical_aligned
 from citlab_python_util.parser.xml.page import plot
 from citlab_python_util.parser.xml.page.page import Page
 from citlab_python_util.parser.xml.page.plot import COLORS
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 def are_vertically_close(poly1, poly2, min_dist_x=200, max_dist_x=1750, max_dist_y=100):
@@ -101,8 +102,8 @@ def get_hyphenation_results(hyph_dict, keyword):
     try:
         hyph_list = hyph_dict[keyword]
     except KeyError:
-        print(f"Found no corresponding entry for {keyword} in the hyphenation file. "
-              f"Just search for the keyword itself.")
+        logger.error(f"Found no corresponding entry for {keyword} in the hyphenation file. "
+                     f"Just search for the keyword itself.")
         hyph_list = []
 
     for hyph_tuple in hyph_list:
@@ -249,7 +250,7 @@ if __name__ == '__main__':
             skip = False
             for result_image_path in result_images_paths:
                 if curr_img in result_image_path:
-                    print(f"Skipping image {curr_img} since the result files for the query {query} already exist.")
+                    logger.info(f"Skipping image {curr_img} since the result files for the query {query} already exist.")
                     skip = True
                     break
             if skip:
@@ -367,7 +368,8 @@ if __name__ == '__main__':
                                                     relevant_textline2.baseline.points_list):
                             new_hyph_results_list = deepcopy(query_results[1])
                             for i, hyph_result in enumerate(query_results[1]):
-                                if hyph_result[0][2] == relevant_textline1.id and hyph_result[1][2] == relevant_textline2.id:
+                                if hyph_result[0][2] == relevant_textline1.id and hyph_result[1][
+                                    2] == relevant_textline2.id:
                                     # delete from info file
                                     new_hyph_results_list.remove(hyph_result)
                                     if not has_full_hit:

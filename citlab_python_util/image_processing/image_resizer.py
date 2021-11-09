@@ -1,15 +1,13 @@
 import os
-
 import cv2
 import numpy as np
 import tensorflow as tf
-
 from citlab_python_util.basic import shape_utils
 from citlab_python_util.io.file_loader import load_image
 from citlab_python_util.io.file_loader import load_list_file
-from citlab_python_util.logging import custom_logging
+from citlab_python_util.logging.custom_logging import setup_custom_logger
 
-logger = custom_logging.setup_custom_logger("ImageResizer", "info")
+logger = setup_custom_logger(__name__, level="info")
 
 
 class ImageResizer:
@@ -229,7 +227,7 @@ if __name__ == '__main__':
         path_to_image_list="/home/max/data/la/racetrack_onb_corrected_baselines_no_tifs/racetrack_onb_corrected_baselines.lst")
     for max_height in max_heights:
         image_resizer.set_max_resolution(max_height=max_height)
-        save_folder = save_folder = "/home/max/newspaper_different_heights/" + str(max_height)
+        save_folder = "/home/max/newspaper_different_heights/" + str(max_height)
         if not os.path.exists(save_folder):
             os.mkdir(save_folder)
         image_resizer.resize_images()

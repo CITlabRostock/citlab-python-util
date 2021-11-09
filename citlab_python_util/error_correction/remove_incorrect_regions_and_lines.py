@@ -1,18 +1,10 @@
-import logging
+from argparse import ArgumentParser
+from tqdm import tqdm
 from citlab_python_util.parser.xml.page.page import Page
 from citlab_article_separation.gnn.input.feature_generation import discard_text_regions_and_lines as discard_regions
-from tqdm import tqdm
-from argparse import ArgumentParser
-import sys
+from citlab_python_util.logging.custom_logging import setup_custom_logger
 
-logger = logging.getLogger()
-logger.setLevel("DEBUG")
-
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+logger = setup_custom_logger(__name__, level="debug")
 
 
 def run(page_path_list, overwrite):

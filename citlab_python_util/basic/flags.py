@@ -1,12 +1,12 @@
 import argparse
-import logging
 import sys
 from collections import OrderedDict
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 # Lightweight argparse wrapper
-
-
 class LineArgumentParser(argparse.ArgumentParser):
     """
     Object for parsing command line strings into Python objects. Inherits from `argparse.ArgumentParser`.
@@ -291,13 +291,13 @@ def print_flags():
     for key, value in FLAGS.order:
         order_final[key] = value
 
-    logging.info("FLAGS:")
+    logger.info("FLAGS:")
     if int(sys.version[0]) < 3:
         flag_list = order_final.items()
     else:
         flag_list = iter(order_final.items())
     for key, value in flag_list:
-        logging.info(f"  {key} = {value}")
+        logger.info(f"  {key} = {value}")
 
 
 def update_params(class_params, flag_params, name="", print_params=False):
@@ -310,24 +310,24 @@ def update_params(class_params, flag_params, name="", print_params=False):
     :return: updated dictionary `class_params`
     """
     if print_params:
-        logging.info(f"---{name}---")
-        logging.info(f"available {name}_params:")
+        logger.info(f"---{name}---")
+        logger.info(f"available {name}_params:")
         for i, j in enumerate(class_params):
-            logging.info(f"  {j}: {class_params[j]}")
+            logger.info(f"  {j}: {class_params[j]}")
 
-        logging.info(f"passed FLAGS.{name}_params:")
+        logger.info(f"passed FLAGS.{name}_params:")
         for i, j in enumerate(flag_params):
-            logging.info(f"  {j}: {flag_params[j]}")
+            logger.info(f"  {j}: {flag_params[j]}")
 
     for i in flag_params:
         if i not in class_params:
-            logging.critical(f"Given {name}_params-key '{i}' is not used by {name}-class!")
+            logger.critical(f"Given {name}_params-key '{i}' is not used by {name}-class!")
 
     class_params.update(flag_params)
 
     if print_params:
-        logging.info(f"updated {name}_params:")
+        logger.info(f"updated {name}_params:")
         for i, j in enumerate(class_params):
-            logging.info(f"  {j}: {class_params[j]}")
+            logger.info(f"  {j}: {class_params[j]}")
 
     return class_params

@@ -1,10 +1,8 @@
 import argparse
 from pathlib import Path
-
 import cv2
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-
 from citlab_python_util.io.file_loader import load_list_file
 
 
@@ -33,7 +31,6 @@ class ImageBinarizer:
 
 def run_image_binarization(image_path_list, mode='otsu', save_folder=None, keep_folder_depth=0):
     """
-
     :param image_path_list:
     :param mode:
     :param save_folder:
@@ -45,8 +42,7 @@ def run_image_binarization(image_path_list, mode='otsu', save_folder=None, keep_
     for image_path in tqdm(image_path_list):
         image_path = Path(image_path)
         if keep_folder_depth < 0:
-            raise ValueError(
-                f"{keep_folder_depth} is not valid. Please choose a value greater or equal to 0 for keep_folder_depth")
+            raise ValueError(f"{keep_folder_depth} is not valid. Please choose a value greater or equal to 0")
         save_path = Path(save_folder).joinpath(*image_path.parts[-1 - keep_folder_depth:])
 
         image = cv2.imread(str(image_path.resolve()))

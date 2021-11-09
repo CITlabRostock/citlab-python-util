@@ -1,20 +1,18 @@
-# -*- coding: utf-8 -*-
 import collections
 import functools
 import os
 import random
 import re
-
 import matplotlib.pyplot as plt
 from PIL import Image, ImageFile
 from matplotlib import colors as mcolors
 from matplotlib.collections import PolyCollection
-
 from citlab_python_util.geometry.polygon import Polygon
 from citlab_python_util.parser.xml.page import page_constants
 from citlab_python_util.parser.xml.page.page import Page
+from citlab_python_util.logging.custom_logging import setup_custom_logger
 
-from matplotlib.pyplot import *
+logger = setup_custom_logger(__name__, level="info")
 
 # Use the default color (black) for the baselines belonging to no article
 DEFAULT_COLOR = 'k'
@@ -77,7 +75,7 @@ def add_image(axes, path, height=None, width=None):
         img = img.convert("RGB")
         return axes.imshow(img)
     except ValueError:
-        print("Can't add image to the plot. Check if '{}' is a valid path.".format(path))
+        logger.error("Can't add image to the plot. Check if '{}' is a valid path.".format(path))
 
 
 def add_polygons(axes, poly_list, color=DEFAULT_COLOR, closed=False, linewidth=1.2, alpha=1.0, filled=False):
@@ -95,8 +93,7 @@ def add_polygons(axes, poly_list, color=DEFAULT_COLOR, closed=False, linewidth=1
                                          linewidths=linewidth, alpha=alpha)
         return axes.add_collection(poly_collection)
     except ValueError:
-        print(f"Could not handle the input polygon format {poly_list}")
-        exit(1)
+        raise ValueError(f"Could not handle the input polygon format {poly_list}")
 
 
 def toggle_view(event, views):
@@ -232,7 +229,7 @@ def plot_ax(ax=None, img_path='', baselines_list=None, surr_polys=None, bcolors=
         img_plot = add_image(ax, img_path, height=height, width=width)
         views.update({"image": img_plot})
     except IOError as err:
-        print(f"Can't display image given by path: {img_path} - {err}")
+        logger.error(f"Can't display image given by path: {img_path} - {err}")
 
     if len(bcolors):
         assert len(bcolors) >= len(baselines_list), f"There should be at least {len(baselines_list)}" \
@@ -335,7 +332,8 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=Fals
                    page_constants.sNOISEREGION: "darkkhaki", page_constants.sMUSICREGION: "firebrick",
                    page_constants.sUNKNOWNREGION: "darkorchid", page_constants.TextRegionTypes.sHEADING: "crimson"}
         region_dict[page_constants.sTEXTREGION] = page.get_text_regions(page_constants.TextRegionTypes.sPARAGRAPH)
-        region_dict[page_constants.TextRegionTypes.sHEADING] = page.get_text_regions(page_constants.TextRegionTypes.sHEADING)
+        region_dict[page_constants.TextRegionTypes.sHEADING] = page.get_text_regions(
+            page_constants.TextRegionTypes.sHEADING)
         region_dict_polygons = {region_name: [region.points.points_list for region in regions] for region_name, regions
                                 in region_dict.items()}
 
@@ -362,23 +360,17 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=Fals
 def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=False, force_equal_names=True,
               fill_regions=False, use_page_image_resolution=False):
     if not img_lst:
-        print(f"No valid image list found: '{img_lst}'.")
-        exit(1)
+        raise IOError(f"No valid image list found: '{img_lst}'.")
     if not img_lst.endswith((".lst", ".txt")) and not os.path.isfile(img_lst):
-        print(f"Image list doesn't have a valid extension or doesn't exist: '{img_lst}'.")
-        exit(1)
-
+        raise IOError(f"Image list doesn't have a valid extension or doesn't exist: '{img_lst}'.")
     if not hyp_lst:
-        print(f"No valid hypothesis list found: '{hyp_lst}'.")
-        exit(1)
+        raise IOError(f"No valid hypothesis list found: '{hyp_lst}'.")
     if not hyp_lst.endswith((".lst", ".txt")) and not os.path.isfile(hyp_lst):
-        print(f"Hypothesis list doesn't have a valid extension or doesn't exist: '{hyp_lst}'.")
-        exit(1)
-
+        raise IOError(f"Hypothesis list doesn't have a valid extension or doesn't exist: '{hyp_lst}'.")
     if not gt_lst:
-        print(f"No valid groundtruth list found: '{gt_lst}'")
+        raise IOError(f"No valid groundtruth list found: '{gt_lst}'")
     elif not gt_lst.endswith((".lst", ".txt")) and not os.path.isfile(gt_lst):
-        print(f"Groundtruth list doesn't have a valid extension or doesn't exist: '{gt_lst}'.")
+        raise IOError(f"Groundtruth list doesn't have a valid extension or doesn't exist: '{gt_lst}'.")
 
     if gt_lst is not None:
         with open(img_lst, 'r') as img_paths:
@@ -389,8 +381,8 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=Fals
                         hyp_path = hyp_path.strip()
                         gt_path = gt_path.strip()
                         if not img_path.endswith((".jpg", ".jpeg", ".png", ".tif")) and os.path.isfile(img_path):
-                            print(f"File '{img_path}' does not have a valid image extension (jpg, jpeg, png, tif) "
-                                  f"or is not a file, skipping.")
+                            logger.warning(f"File '{img_path}' does not have a valid image extension "
+                                           f"(jpg, jpeg, png, tif) or is not a file, skipping.")
                             continue
                         if force_equal_names:
                             hyp_page = os.path.basename(hyp_path)
@@ -398,12 +390,12 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=Fals
                             img_name = os.path.basename(img_path)
                             img_wo_ext = str(img_name.rsplit(".", 1)[0])
                             if hyp_page != img_wo_ext + ".xml":
-                                print(f"Hypothesis: Filenames don't match: '{hyp_page}' vs. '{img_wo_ext + '.xml'}'"
-                                      f", skipping.")
+                                logger.warning(f"Hypothesis: Filenames don't match: "
+                                               f"'{hyp_page}' vs. '{img_wo_ext + '.xml'}', skipping.")
                                 continue
                             if gt_page != img_wo_ext + ".xml":
-                                print(f"Groundtruth: Filenames don't match: '{gt_page}' vs. '{img_wo_ext + '.xml'}'"
-                                      f", ignoring.")
+                                logger.warning(f"Groundtruth: Filenames don't match: "
+                                               f"'{gt_page}' vs. '{img_wo_ext + '.xml'}', ignoring.")
                                 fig, ax = plt.subplots()
                                 fig.canvas.set_window_title(img_path)
                                 ax.set_title('Hypothesis')
@@ -443,17 +435,16 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=Fals
                     img_path = img_path.strip()
                     hyp_path = hyp_path.strip()
                     if not img_path.endswith((".jpg", ".jpeg", ".png", ".tif")) and os.path.isfile(img_path):
-                        print(
-                            f"File '{img_path}' does not have a valid image extension (jpg, jpeg, png, tif) or is not"
-                            f" a file, skipping.")
+                        logger.warning(f"File '{img_path}' does not have a valid image extension "
+                                       f"(jpg, jpeg, png, tif) or is not a file, skipping.")
                         continue
                     if force_equal_names:
                         hyp_page = os.path.basename(hyp_path)
                         img_name = os.path.basename(img_path)
                         img_wo_ext = str(img_name.rsplit(".", 1)[0])
                         if hyp_page != img_wo_ext + ".xml":
-                            print(f"Hypothesis: Filenames don't match: '{hyp_page}' vs. '{img_wo_ext + '.xml'}'"
-                                  f", skipping.")
+                            logger.warning(f"Hypothesis: Filenames don't match: "
+                                           f"'{hyp_page}' vs. '{img_wo_ext + '.xml'}', skipping.")
                             continue
                     fig, ax = plt.subplots()
                     fig.canvas.set_window_title(img_path)
@@ -504,12 +495,10 @@ if __name__ == '__main__':
     # plot_list(path_to_img_lst, path_to_hyp_lst, path_to_gt_lst, plot_article=True, force_equal_names=True)
 
     # # Example for plotting PAGE file
-    path_to_img = "/home/johannes/ONB_aze_19110701_008.jpg"
-    path_to_xml = "/home/johannes/ONB_aze_19110701_008.xml"
-    # path_to_xml = "/home/johannes/devel/576462_0001_23676323_clustering.xml"
-    # path_to_img = "/home/johannes/devel/576462_0001_23676323.jpg"
-    # # path_to_xml = "/home/johannes/devel/19200115_1-0001_clustering.xml"
-    # # path_to_img = "/home/johannes/devel/19200115_1-0001.jpg"
+    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312029/ONB_aze_18950706/page/ONB_aze_18950706_1.xml"
+    path_to_img = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312029/ONB_aze_18950706/ONB_aze_18950706_1.jpg"
+    # path_to_xml = "/home/johannes/devel/19200115_1-0001_clustering.xml"
+    # path_to_img = "/home/johannes/devel/19200115_1-0001.jpg"
     plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
     # save_path = "/home/johannes/devel/nlf.png"
     # plt.axis('off')

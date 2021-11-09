@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-from citlab_python_util.geometry import rectangle as rect
 
 
 def get_binarization(image_path, show_binarized_image=False):
@@ -14,7 +13,7 @@ def get_binarization(image_path, show_binarized_image=False):
     """
     image = cv2.imread(image_path, 0)
     if image is None:
-        exit("Problems while loading the image file '{}'.".format(image_path))
+        raise IOError("Problems while loading the image file '{}'.".format(image_path))
 
     # otsu binarization: returns 0-1-matrix with dimension corresponding to the resolution of the image
     # 0 marks black pixels, 1 marks white pixels

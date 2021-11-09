@@ -1,12 +1,13 @@
 import functools
-
 import math
 import numpy as np
 from collections import Counter
 from scipy.spatial import Delaunay
-
 from citlab_python_util.geometry.polygon import calc_reg_line_stats, Polygon, norm_poly_dists
 from citlab_python_util.geometry.rectangle import Rectangle
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 def merge_rectangles(rectangle_list):
@@ -324,8 +325,6 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     if surrounding_polygon[0] != surrounding_polygon[-1]:
         surrounding_polygon.append(polygon[0])
 
-    # print("--------------------------")
-
     # Normalize polygon points
     poly_xs, poly_ys = zip(*surrounding_polygon)
     poly = Polygon(list(poly_xs), list(poly_ys), len(poly_xs))
@@ -339,10 +338,10 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     dims_min = [100, 80, 100, 60]
     dims = [max(min(x, y), z) for x, y, z in zip(orientation_dims, dims_flex, dims_min)]
 
-    # print("poly_height {}, poly_width {}".format(poly_h, poly_w))
-    # print("orientation_dims ", orientation_dims)
-    # print("dims_flex ", dims_flex)
-    # print("dims ", dims)
+    logger.debug("poly_height {}, poly_width {}".format(poly_h, poly_w))
+    logger.debug("orientation_dims ", orientation_dims)
+    logger.debug("dims_flex ", dims_flex)
+    logger.debug("dims ", dims)
 
     # Determine orientation for every vertex of the (original) polygon
     oriented_points = []
@@ -374,7 +373,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
         # Append point and its orientation as a tuple
         oriented_points.append((pt, pt_o))
 
-        # print("Type: {}, Counts: {}".format(pt_o, sorted_counts))
+        logger.debug("Type: {}, Counts: {}".format(pt_o, sorted_counts))
 
     # Fix wrongly classified points between two same classified ones
     for i in range(len(oriented_points)):
@@ -415,13 +414,13 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     corner_idx = 0
     for i, op in enumerate(oriented_points):
         if 'corner' in op[1]:
-            # print("Rearrange corner at index", i)
+            logger.debug("Rearrange corner at index", i)
             corner_idx = i
             break
     oriented_points = oriented_points[corner_idx:] + oriented_points[:corner_idx]
     oriented_points.append(oriented_points[0])
 
-    # print("oriented points, ", oriented_points)
+    logger.debug("oriented points, ", oriented_points)
 
     # Go through the polygon and and get all corner IDs
     corner_ids = []
@@ -429,7 +428,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
         if 'corner' in op[1]:
             corner_ids.append(i)
 
-    # print("corner IDs, ", corner_ids)
+    logger.debug("corner IDs, ", corner_ids)
 
     # Look at point clusters between neighboring corners
     # Build up list of alternating x- and y-coordinates (representing rays) and build up the polygon afterwards
@@ -448,7 +447,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
     # j is the index for the x- or y-coordinate (horizontal = y, vertical = x)
     j = int(is_horizontal)
 
-    # print("horizontal_edge_start", is_horizontal)
+    logger.debug("horizontal_edge_start", is_horizontal)
 
     for i in range(len(corner_ids) - 1):
         cluster = oriented_points[corner_ids[i]:corner_ids[i + 1] + 1]
@@ -457,7 +456,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
             # Plausi-Check if we're getting the correct type of edge (between corners)
             # Else, switch it and insert missing ray beforehand
             if not j == check_horizontal_edge(cluster[0][0], cluster[-1][0]):
-                # print("SWITCH", i)
+                logger.debug("SWITCH", i)
                 smoothed_edges.append(cluster[0][0][j])
                 j = int(not j)
 
@@ -473,7 +472,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
             # Plausi-Check if we're getting the correct type of edge (between first two points)
             # Else, switch it and insert missing ray beforehand
             if not j == check_horizontal_edge(cluster[0][0], cluster[1][0]):
-                # print("SWITCH", i)
+                logger.debug("SWITCH", i)
                 smoothed_edges.append(cluster[0][0][j])
                 j = int(not j)
 
@@ -482,13 +481,13 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
                 smoothed_edges.append(pt[0][j])
                 j = int(not j)
 
-        # print("smoothed_edges", smoothed_edges)
+        logger.debug("smoothed_edges", smoothed_edges)
 
         # At last step, we may need to add another ray, if the edges between last & first don't match
         if i == len(corner_ids) - 2:
             if j != is_horizontal:
                 smoothed_edges.append(cluster[-1][0][j])
-                # print("smoothed_edges after last step\n", smoothed_edges)
+                prlogger.debugint("smoothed_edges after last step\n", smoothed_edges)
 
     # Go over list of x-y values and build up the polygon by taking the intersection of the rays as vertices
     smoothed_polygon = Polygon()
@@ -500,7 +499,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
             smoothed_polygon.add_point(smoothed_edges[i], smoothed_edges[(i + 1) % len(smoothed_edges)])
             is_horizontal = int(not is_horizontal)
 
-    # print("polygon", smoothed_polygon)
+    logger.debug("polygon", smoothed_polygon)
 
     return smoothed_polygon
 
@@ -674,7 +673,7 @@ def alpha_shape(points, alpha):
     # no boundary edges or
     # boundary with several distant circles / several circles intersecting each other in one point
     if boundaries == [[]] or len(boundaries) > 1:
-        print("alpha value not suitable -> is increased")
+        logger.info("alpha value not suitable -> increasing")
         return alpha_shape(points=points, alpha=alpha + alpha * 0.2)
 
     # boundary with several circles intersecting each other in one point
@@ -683,7 +682,7 @@ def alpha_shape(points, alpha):
 
     for edge in edge_counter:
         if edge_counter[edge] > 2:
-            print("alpha value not suitable -> is increased")
+            logger.info("alpha value not suitable -> increasing")
             return alpha_shape(points, alpha=alpha + alpha * 0.2)
 
     edges = boundaries[0]
