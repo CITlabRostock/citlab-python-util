@@ -487,7 +487,7 @@ def smooth_surrounding_polygon(polygon, poly_norm_dist=10, orientation_dims=(400
         if i == len(corner_ids) - 2:
             if j != is_horizontal:
                 smoothed_edges.append(cluster[-1][0][j])
-                prlogger.debugint("smoothed_edges after last step\n", smoothed_edges)
+                logger.debug("smoothed_edges after last step\n", smoothed_edges)
 
     # Go over list of x-y values and build up the polygon by taking the intersection of the rays as vertices
     smoothed_polygon = Polygon()
