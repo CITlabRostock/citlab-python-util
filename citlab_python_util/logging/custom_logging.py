@@ -14,8 +14,10 @@ def setup_custom_logger(name, level="info"):
     handler.setFormatter(formatter)
     logger = logging.getLogger(name)
     logger.setLevel(level_dict[level])
-    if logger.hasHandlers():
-        logger.handlers.clear()
-    logger.addHandler(handler)
+    # if logger.hasHandlers():
+    #     logger.handlers.clear()
+    # logger.addHandler(handler)
+    if not logger.hasHandlers():
+        logger.addHandler(handler)
     # logger.propagate = False
     return logger
