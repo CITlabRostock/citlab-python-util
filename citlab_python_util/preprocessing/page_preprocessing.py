@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
 from shutil import copyfile
-
 import citlab_python_util.parser.xml.page.page as page
 from citlab_python_util.basic.list_util import filter_by_attribute
 from citlab_python_util.io import file_loader
+from citlab_python_util.logging.custom_logging import setup_custom_logger
 
+logger = setup_custom_logger(__name__, level="info")
 BATCH_SIZE = 100
 
 
@@ -39,13 +40,12 @@ class PagePreProcessor:
         return [page.Page(path_to_page) for path_to_page in self.page_path_list[batch_idx]]
 
     def delete_textlines_with_same_id(self):
-        print(f"Start deleting redundant text lines for batch {self.current_batch_idx}..")
+        logger.info(f"Start deleting redundant text lines for batch {self.current_batch_idx}")
         for i, page_object in enumerate(self.page_object_list):
             textlines = page_object.get_textlines(ignore_redundant_textlines=False)
             if len(textlines) == 0:
-                print(
-                    f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found no text lines in page file "
-                    f"'{self.page_path_list[self.current_batch_idx][i]}'")
+                logger.info(f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found no text lines in page file "
+                            f"'{self.page_path_list[self.current_batch_idx][i]}'")
                 continue
 
             tl_id_dict = filter_by_attribute(textlines, "id")
@@ -56,22 +56,20 @@ class PagePreProcessor:
                     nds = page_object.get_child_by_id(page_object.page_doc, tl_id)
                     for nd in nds[1:]:
                         page_object.remove_page_xml_node(nd)
-            print(
-                f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found {redundant_textline_count} text line ids with multiple"
-                f" assigned text lines in page file '{self.page_path_list[self.current_batch_idx][i]}'")
+            logger.info(f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found {redundant_textline_count} "
+                        f"text line ids with multiple assigned text lines in page file "
+                        f"'{self.page_path_list[self.current_batch_idx][i]}'")
 
     def delete_border_textlines(self):
-        print(
-            f"Start deleting text lines not belonging to the main page (i.e., covering the margin of neighboring pages"
-            f" due to bad scans) for batch {self.current_batch_idx}..")
+        logger.info(f"Start deleting text lines not belonging to the main page (i.e., covering the margin "
+                    f"of neighboring pages due to bad scans) for batch {self.current_batch_idx}")
         import time
         start = time.time()
         for i, page_object in enumerate(self.page_object_list):
             textlines = page_object.get_textlines()
             if len(textlines) == 0:
-                print(
-                    f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found no text lines in page file "
-                    f"'{self.page_path_list[self.current_batch_idx][i]}'")
+                logger.info(f"{int((i + 1) / len(self.page_object_list) * 100):>3}%: Found no text lines in page file "
+                            f"'{self.page_path_list[self.current_batch_idx][i]}'")
                 continue
 
             # sort text lines by the x-values (small to big)
@@ -83,9 +81,13 @@ class PagePreProcessor:
             # avg_baseline_length = sum(
             #     [max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for
             #      textline in textlines])/len(textlines)
-            baseline_lengths_left = [max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for textline in textlines_from_left]
-            baseline_lengths_right = [max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for textline in textlines_from_right]
-            avg_baseline_length = sum(baseline_lengths_left)/len(textlines)
+            baseline_lengths_left = [
+                max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for textline
+                in textlines_from_left]
+            baseline_lengths_right = [
+                max(textline.baseline.to_polygon().x_points) - min(textline.baseline.to_polygon().x_points) for textline
+                in textlines_from_right]
+            avg_baseline_length = sum(baseline_lengths_left) / len(textlines)
 
             count_removed_textlines = 0
             min_margin = 80
@@ -109,8 +111,8 @@ class PagePreProcessor:
                     page_object.remove_page_xml_node(textline_nd)
                     count_removed_textlines += 1
 
-            print(f"Removed {count_removed_textlines}")
-        print(f"Took {time.time() - start}")
+            logger.info(f"Removed {count_removed_textlines} textlines")
+        logger.info(f"Took {time.time() - start:.3f} seconds")
 
     def save_page_files(self, overwrite=False, save_folder=None):
         """

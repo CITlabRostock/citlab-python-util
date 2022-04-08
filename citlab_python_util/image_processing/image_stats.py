@@ -1,10 +1,12 @@
 import os
-
 import PIL
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import interpolation as inter
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 def get_scaling_factor(image_height, image_width, scaling_factor, fixed_height=None, fixed_width=None):
@@ -68,11 +70,11 @@ def get_pixel_histogram(image: np.uint8, plot_histogram: bool = True) -> [int, l
     hist = cv2.calcHist([image], [0], None, [256], [0, 256])
     no_of_pixels = get_number_of_pixels(image)
 
-    print(f"Number of pixels: {no_of_pixels}")
-
+    logger.info(f"Number of pixels: {no_of_pixels}")
     for i, px_value in enumerate(hist):
         px_value_int = int(px_value[0])
-        print(f"Pixel value {i:3} occurs: {px_value_int:8} (relative: {round(px_value_int / no_of_pixels * 100, 4)})")
+        logger.info(f"Pixel value {i:3} occurs: {px_value_int:8} "
+                    f"(relative: {round(px_value_int / no_of_pixels * 100, 4)})")
 
     if plot_histogram:
         plt.subplot(1, 2, 1)
@@ -96,6 +98,3 @@ if __name__ == '__main__':
     image = cv2.imread(path_to_tb, 0)
 
     no_pixel, hist = get_pixel_histogram(image)
-
-    no_pixel = get_number_of_pixels(image)
-    print(no_pixel)

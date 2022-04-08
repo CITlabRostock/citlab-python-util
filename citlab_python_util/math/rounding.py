@@ -27,7 +27,7 @@ def round_by_precision_and_base(x, prec=2, base=1.0):
 
 
 if __name__ == '__main__':
-    x = 1.132354235234234
+    x = 186.132354235234234
     print(x)
     print(round_by_precision_and_base(x, base=0.0001, prec=2))
     print(round_by_precision_and_base(x, base=0.0001, prec=4))

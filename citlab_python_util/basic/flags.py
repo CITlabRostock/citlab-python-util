@@ -1,12 +1,12 @@
 import argparse
-import logging
 import sys
 from collections import OrderedDict
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 # Lightweight argparse wrapper
-
-
 class LineArgumentParser(argparse.ArgumentParser):
     """
     Object for parsing command line strings into Python objects. Inherits from `argparse.ArgumentParser`.
@@ -291,17 +291,17 @@ def print_flags():
     for key, value in FLAGS.order:
         order_final[key] = value
 
-    print("FLAGS:")
+    logger.info("FLAGS:")
     if int(sys.version[0]) < 3:
         flag_list = order_final.items()
     else:
         flag_list = iter(order_final.items())
     for key, value in flag_list:
-        print("  {} = {}".format(key, value))
+        logger.info(f"  {key} = {value}")
 
 
 def update_params(class_params, flag_params, name="", print_params=False):
-    """update a dictionary holding various parameters using a 'flag' containing a dictionary
+    """Update a dictionary holding various parameters using a 'flag' containing a dictionary
 
     :param class_params: dictionary whose entries will get updated
     :param flag_params: dictionary used for the update (should only contain keys already present in `class_params`)
@@ -310,24 +310,24 @@ def update_params(class_params, flag_params, name="", print_params=False):
     :return: updated dictionary `class_params`
     """
     if print_params:
-        print("---{}---".format(name))
-        print("available {}_params:".format(name))
+        logger.info(f"---{name}---")
+        logger.info(f"available {name}_params:")
         for i, j in enumerate(class_params):
-            print("  {}: {}".format(j, class_params[j]))
+            logger.info(f"  {j}: {class_params[j]}")
 
-        print("passed FLAGS.{}_params:".format(name))
+        logger.info(f"passed FLAGS.{name}_params:")
         for i, j in enumerate(flag_params):
-            print("  {}: {}".format(j, flag_params[j]))
+            logger.info(f"  {j}: {flag_params[j]}")
 
     for i in flag_params:
         if i not in class_params:
-            logging.critical("Given {0}_params-key '{1}' is not used by {0}-class!".format(name, i))
+            logger.critical(f"Given {name}_params-key '{i}' is not used by {name}-class!")
 
     class_params.update(flag_params)
 
     if print_params:
-        print("updated {}_params:".format(name))
+        logger.info(f"updated {name}_params:")
         for i, j in enumerate(class_params):
-            print("  {}: {}".format(j, class_params[j]))
+            logger.info(f"  {j}: {class_params[j]}")
 
     return class_params

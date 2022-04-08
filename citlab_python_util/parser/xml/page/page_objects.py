@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 import numpy as np
-import logging
 from lxml import etree
-
 import citlab_python_util.parser.xml.page.page_constants as page_const
 from citlab_python_util.geometry.polygon import Polygon
 from citlab_python_util.parser.xml.page import page_util
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 def polygon_to_points(polygon):
@@ -25,9 +25,7 @@ def string_to_points(s):
             (sx, sy) = s_pair.split(',')
             l_xy.append((int(sx), int(sy)))
         except ValueError:
-            print("Can't convert string '{}' to a point.".format(s_pair))
-            exit(1)
-
+            raise ValueError("Can't convert string '{}' to a point.".format(s_pair))
     return l_xy
 
 
@@ -87,7 +85,7 @@ class Region:
         try:
             return self.custom["readingOrder"]["index"]
         except KeyError:
-            # print("Reading order index missing.")
+            logger.warning("Reading order index missing.")
             return None
 
     def set_reading_order(self, reading_order):
@@ -224,7 +222,7 @@ class TextLine:
             text_line_nd.set('custom', page_util.format_custom_attr(self.custom))
 
         if not self.surr_p:
-            logging.warning(f"Can't convert TextLine to PAGE-XML node since no surrounding polygon is given ({self.id}).")
+            logger.warning(f"Can't convert TextLine to PAGE-XML node since no surrounding polygon is given ({self.id}).")
             return None
 
         coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
@@ -260,7 +258,7 @@ class TextLine:
         try:
             return self.custom["readingOrder"]["index"]
         except KeyError:
-            # print("Reading order index missing.")
+            logger.warning("Reading order index missing.")
             return None
 
     def get_article_id(self):
@@ -329,7 +327,7 @@ class Word:
             word_nd.set('custom', page_util.format_custom_attr(self.custom))
 
         if not self.surr_p:
-            logging.warning(f"Can't convert Word to PAGE-XML node since no surrounding polygon is given ({self.id}).")
+            logger.warning(f"Can't convert Word to PAGE-XML node since no surrounding polygon is given ({self.id}).")
             return None
 
         coords_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sCOORDS))
@@ -352,7 +350,7 @@ class Word:
         try:
             return self.custom["readingOrder"]["index"]
         except KeyError:
-            # print("Reading order index missing.")
+            logger.warning("Reading order index missing.")
             return None
 
     def set_reading_order(self, reading_order):
@@ -376,6 +374,7 @@ REGIONS_DICT = {page_const.sTEXTREGION: TextRegion, page_const.sIMAGEREGION: Ima
                 page_const.sCHEMREGION: ChemRegion, page_const.sMUSICREGION: MusicRegion,
                 page_const.sADVERTREGION: AdvertRegion, page_const.sNOISEREGION: NoiseRegion,
                 page_const.sUNKNOWNREGION: UnknownRegion}
+
 
 if __name__ == '__main__':
     points_polygon = [(1, 2), (3, 4), (5, 6)]

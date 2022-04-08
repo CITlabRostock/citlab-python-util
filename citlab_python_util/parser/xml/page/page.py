@@ -1,22 +1,16 @@
-# -*- coding: utf-8 -*-
 import datetime
-import logging
 import os
 from argparse import ArgumentParser
-
 import cssutils
 from lxml import etree
-
 import citlab_python_util.parser.xml.page.page_constants as page_const
 from citlab_python_util.parser.xml.page import page_util, page_objects
 from citlab_python_util.parser.xml.page.page_objects import TextLine, TextRegion, REGIONS_DICT, Word
+from citlab_python_util.logging.custom_logging import setup_custom_logger
 
-# Make sure that the css parser for the custom attribute doesn't spam "WARNING Property: Unknown Property name."
-cssutils.log.setLevel(logging.ERROR)
-
-# logger.basicConfig(filename="docs/Page.log",
-#                     format="%(asctime)s:%(levelname)s:%(message)s", filemode="w")  # add filemode="w" to overwrite file
-logger = logging.getLogger("Page")
+logger = setup_custom_logger(__name__, level="info")
+# Make sure that the css parser for the custom attribute does not spam "WARNING Property: Unknown Property name."
+cssutils.log.setLevel("ERROR")
 
 
 class Page:
@@ -185,7 +179,8 @@ class Page:
         nd4 = nd3.getnext()
         if nd4 is not None:
             if etree.QName(nd4.tag).localname not in [page_const.sCOMMENTS_ELT, page_const.sTranskribusMetadata_ELT]:
-                raise ValueError("PageXMl mal-formed Metadata: Comments or TranskribusMetadata element must be 4th element")
+                raise ValueError(
+                    "PageXMl mal-formed Metadata: Comments or TranskribusMetadata element must be 4th element")
 
         nd5 = nd4.getnext() if nd4 is not None else None
         if nd5 is not None:
@@ -267,7 +262,7 @@ class Page:
         if s_attr_name in ddic and s_sub_attr_name in ddic[s_attr_name]:
             ddic[s_attr_name].pop(s_sub_attr_name)
         else:
-            print("Can't remove {} from {} in {}.".format(s_sub_attr_name, s_attr_name, ddic))
+            logger.warning(f"Can't remove {s_sub_attr_name} from {s_attr_name} in {ddic}.")
 
     @staticmethod
     def parse_custom_attr(s):
@@ -372,37 +367,61 @@ class Page:
 
     def get_print_space_coords(self):
         ps_nd = self.get_child_by_name(self.page_doc, page_const.sPRINT_SPACE)
-
-        if len(ps_nd) != 1:
-            print(f"Expected exactly one {page_const.sPRINT_SPACE} node, but got {len(ps_nd)}.")
-            # exit(1)
-            print(f"Fallback to image size.")
-            img_width, img_height = self.get_image_resolution()
-
-            ps_coords = [(0, 0), (img_width, 0), (img_width, img_height), (0, img_height)]
-
-        else:
+        img_width, img_height = self.get_image_resolution()
+        if ps_nd is None or len(ps_nd) == 0:
+            logger.warning(f"Expected exactly one {page_const.sPRINT_SPACE} node, but got none. "
+                           f"Fallback to entire image size.")
+            return [(0, 0), (img_width, 0), (img_width, img_height), (0, img_height)]
+        elif len(ps_nd) == 1:
             ps_nd = ps_nd[0]
-
-            # we assume that the PrintSpace is given as a rectangle, thus having four coordinates
+            # get coordinates
             ps_coords = self.get_point_list(
                 self.get_child_by_name(ps_nd, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
-            for i, (x, y) in enumerate(ps_coords):
-                if x < 0:
-                    x_new = 0
-                else:
-                    x_new = x
-                if y < 0:
-                    y_new = 0
-                else:
-                    y_new = y
-                ps_coords[i] = (x_new, y_new)
+        else:  # len(ps_nd) > 1
+            logger.warning(f"Expected exactly one {page_const.sPRINT_SPACE} node, but got {len(ps_nd)}. "
+                           f"Fallback to bounding box over all entities.")
+            ps_coords = list()
+            # gather all coordinates
+            for node in ps_nd:
+                ps_coords.extend(self.get_point_list(
+                    self.get_child_by_name(node, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR)))
 
-            if len(ps_coords) != 4:
-                print(f"Expected exactly four rectangle coordinates, but got {len(ps_coords)}.")
-                exit(1)
-
+        # clip coordinates
+        for i, (x, y) in enumerate(ps_coords):
+            x_clip = max(0, min(x, img_width))
+            y_clip = max(0, min(y, img_height))
+            ps_coords[i] = (x_clip, y_clip)
+        # we assume that the PrintSpace is given as a rectangle, thus having 4 coordinates
+        # otherwise we compute the bounding box
+        if len(ps_coords) != 4:
+            logger.warning(f"Expected exactly 4 PrintSpace coordinates, but got {len(ps_coords)}. "
+                           f"Computing bounding box.")
+            x_coords, y_coords = list(zip(*ps_coords))
+            min_x = min(x_coords)
+            max_x = max(x_coords)
+            min_y = min(y_coords)
+            max_y = max(y_coords)
+            ps_coords = [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
         return ps_coords
+        # if len(ps_nd) != 1:
+        #     logger.warning(f"Expected exactly one {page_const.sPRINT_SPACE} node, but got {len(ps_nd)}. "
+        #                    f"Fallback to entire image size")
+        #     img_width, img_height = self.get_image_resolution()
+        #     ps_coords = [(0, 0), (img_width, 0), (img_width, img_height), (0, img_height)]
+        # else:
+        #     ps_nd = ps_nd[0]
+        #     # we assume that the PrintSpace is given as a rectangle, thus having four coordinates
+        #     ps_coords = self.get_point_list(
+        #         self.get_child_by_name(ps_nd, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
+        #     for i, (x, y) in enumerate(ps_coords):
+        #         x_new = 0 if x < 0 else x
+        #         y_new = 0 if y < 0 else y
+        #         ps_coords[i] = (x_new, y_new)
+        #
+        #     if len(ps_coords) != 4:
+        #         logger.error(f"Expected exactly four rectangle coordinates, but got {len(ps_coords)}.")
+        #         exit(1)
+        # return ps_coords
 
     def get_ids(self):
         """
@@ -499,7 +518,6 @@ class Page:
             words = self.get_words(tl)
             res.append(TextLine(tl_id, tl_custom_attr, tl_text, tl_bl, tl_surr_p, words))
 
-
         # return [TextLine(tl.get("id"), self.parse_custom_attr(tl.get(self.sCUSTOM_ATTR)), self.get_text_equiv(tl),
         #                  self.get_point_list(self.get_child_by_name(tl, self.sBASELINE)[0]), self.get_point_list(tl))
         #         for tl in tl_nds]
@@ -525,7 +543,6 @@ class Page:
             res.append(Word(word_id, word_custom_attr, word_text, word_surr_p))
 
         return res
-
 
     def update_textlines(self):
         self.textlines = self.get_textlines()
@@ -759,7 +776,8 @@ class Metadata:
         self.Created = created  # a string
         self.LastChange = last_change  # a string
         self.Comments = comments  # None or a string
-        self.TranskribusMeta = transkribus_meta # None or TranskribusMetadata object
+        self.TranskribusMeta = transkribus_meta  # None or TranskribusMetadata object
+
 
 class TranskribusMetadata:
     """
@@ -787,7 +805,6 @@ class TranskribusMetadata:
         self.imgUrl = imgUrl
         self.xmlUrl = xmlUrl
         self.imageId = imageId
-
 
 
 if __name__ == "__main__":

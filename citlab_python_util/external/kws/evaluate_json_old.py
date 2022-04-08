@@ -2,13 +2,14 @@ import argparse
 import json
 import os
 import re
-
 import matplotlib.pyplot as plt
-
 from citlab_python_util.geometry.polygon import string_to_poly
 from citlab_python_util.parser.xml.page import plot
 from citlab_python_util.parser.xml.page.page import Page
-from citlab_python_util.parser.xml.page.plot import COLORS, DEFAULT_COLOR
+from citlab_python_util.parser.xml.page.plot import COLORS
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 def list_img_intersect(l1, l2):
@@ -92,9 +93,6 @@ if __name__ == '__main__':
     with open(path_to_json, "r") as json_file:
         # load json file
         js = json.load(json_file)
-        # print(js['keywords'][0]['pos'][0]['conf'])
-        # exit(1)
-        # print(json.dumps(js, indent=4, sort_keys=True))
 
         # extract keywords and corresponding matches
         kws_results = {}
@@ -115,7 +113,7 @@ if __name__ == '__main__':
                     for kw in matched_kws:
                         # Get the corresponding image results from the json
                         query_img_matches += get_imgs_from_kw(kws_results, kw)
-                    # print(f"{query:10} matches {kw:20} -- {query_img_matches[query]}")
+                    logger.debug(f"{query:10} matches {kw:20} -- {query_img_matches[query]}")
                     query_list.append(query_img_matches)
                 else:
                     query_list.append(query)
@@ -127,7 +125,6 @@ if __name__ == '__main__':
                 # Evaluate triple aRb (this only works when items and expressions alternate,
                 # i.e. just OR/AND, no brackets/NOT, e.g. aRbRcRd...)
                 sub_list = query_list[-3:]
-                # print(sub_list)
                 if sub_list[1].upper() == 'AND':
                     eval_list = list_img_intersect(sub_list[0], sub_list[2])
                 elif sub_list[1].upper() == 'OR':
@@ -153,10 +150,10 @@ if __name__ == '__main__':
                 info_file.write(f"Query '{_query}' results in the following matches:\n")
                 info_file.write(json.dumps(query_results, indent=2))
 
-            # print(f"\nQuery '{_query}' results in the following matches:")
-            # print(f"Number of hits: {len(query_results)}")
-            # print(f"Number of relevant images: {len(relevant_images)}\n")
-            # print(json.dumps(query_results, indent=2))
+            logger.debug(f"\nQuery '{_query}' results in the following matches:")
+            logger.debug(f"Number of hits: {len(query_results)}")
+            logger.debug(f"Number of relevant images: {len(relevant_images)}\n")
+            logger.debug(json.dumps(query_results, indent=2))
 
             result_images_paths = []
             for dirpath, _, filenames in os.walk(path_to_query_folder):
@@ -169,7 +166,8 @@ if __name__ == '__main__':
                 skip = False
                 for result_image_path in result_images_paths:
                     if curr_img in result_image_path:
-                        print(f'Skipping image {curr_img} since the result files for query {_query} already exist.')
+                        logger.info(
+                            f'Skipping image {curr_img} since the result files for query {_query} already exist.')
                         skip = True
                 if skip:
                     continue
@@ -179,7 +177,6 @@ if __name__ == '__main__':
                     if curr_img in image_path:
                         curr_img_path = image_path
                         break
-                # print(curr_img_path)
 
                 # open corresponding PAGE file
                 page_path = get_corresponding_page_path(curr_img_path)
@@ -194,7 +191,6 @@ if __name__ == '__main__':
 
                 with open(os.path.join(path_to_query_folder, curr_img + ".txt"), 'w+') as text_file:
                     text_file.write(f"QUERY: '{_query}'\n\n")
-
 
                 for hit in query_results:
                     if hit[0] == curr_img:

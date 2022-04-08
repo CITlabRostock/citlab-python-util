@@ -60,6 +60,3 @@ def load_image(path_to_image, module="pil", mode="L"):
         if mode == "L":
             mode = cv2.IMREAD_GRAYSCALE
             return cv2.imread(path_to_image, mode)
-
-
-

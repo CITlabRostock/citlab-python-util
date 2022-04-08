@@ -1,5 +1,8 @@
 import numpy as np
 import cv2
+from citlab_python_util.logging.custom_logging import setup_custom_logger
+
+logger = setup_custom_logger(__name__, level="info")
 
 
 class StrokeWidthDistanceTransform(object):
@@ -43,8 +46,8 @@ class StrokeWidthDistanceTransform(object):
 
     def clean_connected_components(self, components):
         components_clean = []
-        # count_rejected_1 = 0
-        # count_rejected_2 = 0
+        num_rejected_size = 0
+        num_rejected_ratio = 0
         for component in components:
             # component is a 4-tuple (x, y, width, height)
             width = component[2]
@@ -52,17 +55,17 @@ class StrokeWidthDistanceTransform(object):
             if self._clean_ccs > 0:
                 # test 1: reject components whose size is too small or too large
                 if width < 3 or height < 3 or height > 500 or width > 500:
-                    # count_rejected_1 += 1
+                    num_rejected_size += 1
                     continue
             if self._clean_ccs > 1:
                 # test 2: reject components with too extreme aspect ratios (long narrow components)
                 if width / height > 8 or height / width > 8:
-                    # count_rejected_2 += 1
+                    num_rejected_ratio += 1
                     continue
             # component is accepted
             components_clean.append(component)
-        # print(f"Rejected {count_rejected_1 + count_rejected_2}/{len(components)} connected components due to "
-        #       f"cleaning (Size test: {count_rejected_1}, Ratio test: {count_rejected_2}).")
+        logger.debug(f"Rejected {num_rejected_size + num_rejected_ratio}/{len(components)} connected components due to "
+                     f"cleaning (Size test: {num_rejected_size}, Ratio test: {num_rejected_ratio}).")
         return components_clean
 
 
@@ -71,6 +74,7 @@ if __name__ == '__main__':
     page_path = "xyz"
 
     from citlab_python_util.parser.xml.page.page import Page
+
     # Load page and textlines
     page = Page(page_path)
     text_lines = page.get_textlines()
