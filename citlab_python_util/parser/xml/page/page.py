@@ -5,7 +5,7 @@ import cssutils
 from lxml import etree
 import citlab_python_util.parser.xml.page.page_constants as page_const
 from citlab_python_util.parser.xml.page import page_util, page_objects
-from citlab_python_util.parser.xml.page.page_objects import TextLine, TextRegion, REGIONS_DICT, Word
+from citlab_python_util.parser.xml.page.page_objects import TextLine, TextRegion, Relation, REGIONS_DICT, Word
 from citlab_python_util.logging.custom_logging import setup_custom_logger
 
 logger = setup_custom_logger(__name__, level="info")
@@ -347,17 +347,6 @@ class Page:
 
     # ======== ARTICLE STUFF =========
 
-    def get_article_dict(self):
-        article_dict = {}
-        for tl in self.textlines:
-            a_id = tl.get_article_id()
-            if a_id in article_dict:
-                article_dict[a_id].append(tl)
-            else:
-                article_dict[a_id] = [tl]
-
-        return article_dict
-
     def get_image_resolution(self):
         page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
         img_width = int(page_nd.get("imageWidth"))
@@ -444,6 +433,70 @@ class Page:
                 return new_id
         return None
 
+    def get_article_dict(self):
+        article_dict = {}
+        for tl in self.textlines:
+            a_id = tl.get_article_id()
+            if a_id in article_dict:
+                article_dict[a_id].append(tl)
+            else:
+                article_dict[a_id] = [tl]
+
+        return article_dict
+
+    def get_relations(self, refs_only=True):
+        relations = []
+        relation_nds = self.get_child_by_name(self.page_doc, page_const.sRELATION)
+        relations_nds = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)
+        relation_nds_2 = self.get_child_by_name(relations_nds[0], page_const.sRELATION)
+        if len(relation_nds) > 0:
+            for relation_nd in relation_nds:
+                relation_nd_type = relation_nd.get('type')
+                relation_nd_custom_attr = self.parse_custom_attr(relation_nd.get(page_const.sCUSTOM_ATTR))
+                relation_nd_children = list(relation_nd)
+                relation_nd_region_ids = [child.get('regionRef') for child in relation_nd_children]
+                if refs_only:
+                    relation = Relation(relation_nd_type, relation_nd_custom_attr, region_refs=relation_nd_region_ids)
+                else:
+                    relation_nd_regions = [self.get_child_by_id(self.page_doc, id)[0] for id in relation_nd_region_ids]
+                    relation_regions = [self.get_region(nd) for nd in relation_nd_regions]
+                    relation = Relation(relation_nd_type, relation_nd_custom_attr, regions=relation_regions)
+                relations.append(relation)
+        return relations
+
+    def get_article_region_dict(self):
+        """Returns two dictionaries containing article-region relations.
+
+        The first has the article_ids as keys with all corresponding region_ids as values.
+
+        The second has the region_ids as keys with the corresponding article_id as value.
+
+        The method reports ambiguous cases, where particular text regions are present in multiple relations
+        with different article_ids."""
+        # get article relations
+        relations = self.get_relations(refs_only=True)
+        article_relations = [rel for rel in relations if rel.relation_name == "Article"]
+
+        # dict with {article_id -> [region_id, region_id, ...]}
+        article_region_dict = dict()
+        for rel in article_relations:
+            a_id = rel.id
+            if a_id is None:
+                logger.warning("Missing 'id' for article relation.")
+                continue
+            if a_id in article_region_dict:
+                logger.warning(f"Found relation with article id that already exists: {rel}")
+                continue
+            article_region_dict[a_id] = rel.region_refs
+
+        # dict with {region_id -> [article_id, article_id, ...]}
+        region_article_dict = page_util.reverse_dict(article_region_dict)
+        # check for ambiguous regions (that are part of multiple relations with different article ids)
+        ambiguous_regions = [(k, v) for k, v in region_article_dict.items() if len(v) > 1]
+        if ambiguous_regions:
+            logger.warning(f"Found ambiguous regions in article relations: {ambiguous_regions}")
+        return article_region_dict, region_article_dict
+
     def get_text_regions(self, text_region_type=None):
         text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
         res = []
@@ -478,6 +531,28 @@ class Page:
         logger.info("Removing all regions of type {}.".format(region_type))
         for r_nd in r_nds:
             self.remove_page_xml_node(r_nd)
+
+    def get_region(self, region_nd):
+        region_name = region_nd.tag.replace(f"{{{page_const.NS_PAGE_XML}}}", "")  # TODO: is this sufficient?
+        # get general attributes
+        region_id = region_nd.get("id")
+        region_custom_attr = self.parse_custom_attr(region_nd.get(page_const.sCUSTOM_ATTR))
+        region_coords = self.get_point_list(
+            self.get_child_by_name(region_nd, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
+        if region_name == page_const.sTEXTREGION:
+            # text region specific attributes
+            region_text_lines = self.get_textlines(region_nd)
+            region_type = region_nd.get("type")
+            region_type = region_type if region_type is not None else page_const.TextRegionTypes.sPARAGRAPH
+            region = TextRegion(region_id, region_custom_attr, region_coords, region_text_lines, region_type)
+        else:
+            try:
+                region_class = REGIONS_DICT[region_name]
+            except KeyError:
+                logger.warning(f"Unknown region type {region_name}")
+                return None
+            region = region_class(region_id, region_custom_attr, region_coords)
+        return region
 
     def get_regions(self):
         res = {}
@@ -570,6 +645,40 @@ class Page:
             # tl_nd = cls.get_child_by_id(nd, tl.id)[0]
             # cls.set_custom_attr(tl_nd, "structure", "id", tl.get_article_id())
             # cls.set_custom_attr(tl_nd, "structure", "type", "article")
+
+    def verify_relation(self, relation):
+        """Verify that regions contained in the given relation are eligible, i.e. that they
+        actually exist in the page document."""
+        for region_id in relation.region_refs:
+            if not self.get_child_by_id(self.page_doc, region_id):
+                return False
+        return True
+
+    def add_relation(self, relation):
+        """Adds a single relation to the page document."""
+        if not self.verify_relation(relation):
+            logger.warning("Trying to add a non-eligible relation. "
+                           "Make sure that the referenced regions actually exist!")
+            return
+        relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
+        relation_nd = relation.to_page_xml_node()
+        if relation_nd is not None:
+            relations_nd.append(relation_nd)
+
+    def set_relations(self, relations, overwrite=False):
+        """Adds multiple relations to the page document. If `overwrite` is True, deletes any previous relations."""
+        relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
+        if overwrite:
+            current_relation_nds = self.get_child_by_name(relations_nd, page_const.sRELATION)
+            for relation_nd in current_relation_nds:
+                self.remove_page_xml_node(relation_nd)
+        for relation in relations:
+            if not self.verify_relation(relation):
+                logger.warning("Trying to add a non-eligible relation. "
+                               "Make sure that the referenced regions actually exist!")
+                continue
+            relation_nd = relation.to_page_xml_node()
+            relations_nd.append(relation_nd)
 
     def add_region(self, region, overwrite=False):
         # TODO: Check if region is overlapping with other regions. Add reading order.
@@ -815,14 +924,45 @@ if __name__ == "__main__":
 
     path_to_xml = flags.path_to_xml
     if path_to_xml == '':
-        path_to_xml = "/home/max/data/newseye/gt_data/trnskrbs_61381_nlf/330110/1895_06_01/page/330110_0001_13011771_old.xml"
+        path_to_xml = "/home/johannes/devel/TEMP/koeln112_as_gt_test_relations/AS_GT_Koeln_Relations_validation/page/" \
+                      "0001_Koelnische_Zeitung._1803-1945 95_96 (21.2.1936)_Seite_12.xml"
 
     print(path_to_xml)
-
     page = Page(path_to_xml)
-
     transkribus_metadata: TranskribusMetadata = page.metadata.TranskribusMeta
     print("imageId = ", transkribus_metadata.imageId)
+
+    # article_region_dict, region_article_dict = page.get_article_region_dict()
+    # for key in article_region_dict:
+    #     print(f"{key} --- {article_region_dict[key]}")
+    # print("#######################################"*5)
+    # for key in region_article_dict:
+    #     print(f"{key} --- {region_article_dict[key]}")
+
+    relations = page.get_relations(refs_only=False)
+    for relation in relations:
+        print(f"{relation.type} -- {relation.region_refs}")
+    print("##############"*10)
+
+    rel1 = Relation("new_type", custom={"custom_tag": {"value": 0}}, region_refs=["tr_1651232483", "tr_1651232491"])
+    rel2 = Relation("new_type", custom={"custom_tag": {"value": 1}}, region_refs=["tr_1651232483", "tr_1651232471xxx"])
+
+    r1 = page.add_relation(rel1)
+    r2 = page.add_relation(rel2)
+
+    relations = page.get_relations(refs_only=False)
+    for relation in relations:
+        print(f"{relation.type} -- {relation.region_refs}")
+    print("##############"*10)
+
+    page.write_page_xml(path_to_xml.replace(".xml", "MODIFIED.xml"))
+
+    # page.set_relations([rel1, rel2], overwrite=False)
+    #
+    # relations = page.get_relations(refs_only=False)
+    # for relation in relations:
+    #     print(f"{relation.type} -- {relation.region_refs}")
+    # print("##############"*10)
 
     # text_region = page.get_text_regions()[1]
     # print("TextRegion: ", text_region)
