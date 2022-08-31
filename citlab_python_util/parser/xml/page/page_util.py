@@ -20,3 +20,17 @@ def format_custom_attr(ddic):
         s += " {%s}" % s2
     return s
 
+
+def reverse_dict(dictionary: dict) -> dict:
+    """
+    Inverts a dictionary from key -> values to value -> key. Values are converted to lists and the method also
+    handles duplicate values. The method is invertible, i.e. mydict = reverse_dict(reverse_dict(my_dict))
+    """
+    rev_dict = dict()
+    for key, value in dictionary.items():
+        if not isinstance(value, (list, tuple)):
+            value = [value]
+        for val in value:
+            rev_dict[val] = rev_dict.get(val, [])
+            rev_dict[val].append(key)
+    return rev_dict
