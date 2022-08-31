@@ -29,6 +29,63 @@ def string_to_points(s):
     return l_xy
 
 
+class Relation:
+    def __init__(self, rel_type, custom=None, regions=None, region_refs=None):
+        if rel_type is None:
+            raise page_util.PageXmlException("Every Relation must have a type.")
+        self.type = rel_type
+        self.custom = custom
+        self.regions = regions
+        self.region_refs = region_refs
+        # set region refs according to regions, if given
+        if self.regions:
+            self.region_refs = [region.id for region in self.regions]
+
+    @property
+    def id(self):
+        try:
+            return self.custom["id"]["value"]
+        except KeyError:
+            logger.warning("'id' value missing in custom tag.")
+            return None
+
+    @property
+    def relation_name(self):
+        try:
+            return self.custom["relationName"]["value"]
+        except KeyError:
+            logger.warning("'relationName' value missing in custom tag.")
+            return None
+
+    @property
+    def relation_type(self):
+        try:
+            return self.custom["relationType"]["value"]
+        except KeyError:
+            logger.warning("'relationType' value missing in custom tag.")
+            return None
+
+    @property
+    def article_id(self):
+        return self.id if self.relation_name == "Article" else None
+
+    def to_page_xml_node(self):
+        relation_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sRELATION))
+        relation_nd.set('type', str(self.type))
+        if self.custom:
+            relation_nd.set('custom', page_util.format_custom_attr(self.custom))
+
+        for region_id in self.region_refs:
+            region_ref_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sREGIONREF))
+            region_ref_nd.set('regionRef', region_id)
+            relation_nd.append(region_ref_nd)
+
+        return relation_nd
+
+    def __str__(self):
+        return f"{self.type} - {self.custom}"
+
+
 class Points:
     def __init__(self, points_list):
         if type(points_list[0][0]) == float:
