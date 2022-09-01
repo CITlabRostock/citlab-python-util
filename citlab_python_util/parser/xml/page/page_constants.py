@@ -52,6 +52,20 @@ sUNKNOWNREGION = "UnknownRegion"
 sEXT = ".xml"
 
 
+# Relation Types
+class RelationTypes:
+    sLINK = "link"
+    sJOIN = "join"
+
+    @classmethod
+    def verify(cls, rel_type):
+        return rel_type in (cls.sLINK, cls.sJOIN)
+
+    @classmethod
+    def list(cls):
+        return [cls.sLINK, cls.sJOIN]
+
+
 # TextRegion Types
 class TextRegionTypes:
     sPARAGRAPH = "paragraph"
@@ -71,3 +85,23 @@ class TextRegionTypes:
     sENDNOTE = "endnote"
     sTOCENTRY = "TOC-entry"
     sOTHER = "other"
+
+    @classmethod
+    def list(cls):
+        return [cls.sPARAGRAPH,
+                cls.sHEADING,
+                cls.sCAPTION,
+                cls.sHEADER,
+                cls.sFOOTER,
+                cls.sPAGENUMBER,
+                cls.sDROPCAPITAL,
+                cls.sCREDIT,
+                cls.sFLOATING,
+                cls.sSIGNATUREMARK,
+                cls.sCATCHWORD,
+                cls.sMARGINALIA,
+                cls.sFOOTNOTE,
+                cls.sFOOTNOTECONT,
+                cls.sENDNOTE,
+                cls.sTOCENTRY,
+                cls.sOTHER]
