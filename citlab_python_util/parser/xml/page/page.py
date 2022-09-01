@@ -447,8 +447,6 @@ class Page:
     def get_relations(self, refs_only=True):
         relations = []
         relation_nds = self.get_child_by_name(self.page_doc, page_const.sRELATION)
-        relations_nds = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)
-        relation_nds_2 = self.get_child_by_name(relations_nds[0], page_const.sRELATION)
         if len(relation_nds) > 0:
             for relation_nd in relation_nds:
                 relation_nd_type = relation_nd.get('type')
@@ -490,7 +488,7 @@ class Page:
             article_region_dict[a_id] = rel.region_refs
 
         # dict with {region_id -> [article_id, article_id, ...]}
-        region_article_dict = page_util.reverse_dict(article_region_dict)
+        region_article_dict = page_util.inverse_dict(article_region_dict)
         # check for ambiguous regions (that are part of multiple relations with different article ids)
         ambiguous_regions = [(k, v) for k, v in region_article_dict.items() if len(v) > 1]
         if ambiguous_regions:
@@ -657,7 +655,7 @@ class Page:
     def add_relation(self, relation):
         """Adds a single relation to the page document."""
         if not self.verify_relation(relation):
-            logger.warning("Trying to add a non-eligible relation. "
+            logger.warning("Trying to add a non-eligible relation to the page document. "
                            "Make sure that the referenced regions actually exist!")
             return
         relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
@@ -939,23 +937,46 @@ if __name__ == "__main__":
     # for key in region_article_dict:
     #     print(f"{key} --- {region_article_dict[key]}")
 
-    relations = page.get_relations(refs_only=False)
-    for relation in relations:
-        print(f"{relation.type} -- {relation.region_refs}")
-    print("##############"*10)
+    # relations = page.get_relations(refs_only=False)
+    # for relation in relations:
+    #     print(f"{relation.type} -- {relation.region_refs}")
+    # print("##############" * 10)
+    #
+    # rel1 = Relation("new_type", custom={"custom_tag": {"value": 0}}, region_refs=["tr_1651232483", "tr_1651232491"])
+    # rel2 = Relation("new_type", custom={"custom_tag": {"value": 1}}, region_refs=["tr_1651232483", "tr_1651232471xxx"])
+    #
+    # r1 = page.add_relation(rel1)
+    # r2 = page.add_relation(rel2)
+    #
+    # relations = page.get_relations(refs_only=False)
+    # for relation in relations:
+    #     print(f"{relation.type} -- {relation.region_refs}")
+    # print("##############" * 10)
+    #
+    # rel = page.get_relations()[0]
+    # print(rel)
+    # rel.set_type("myType")
+    # page.add_relation(rel)
+    #
+    # relations = page.get_relations(refs_only=False)
+    # for relation in relations:
+    #     print(f"{relation.type} -- {relation.region_refs}")
+    # print("##############" * 10)
+    #
+    # page.write_page_xml(path_to_xml.replace(".xml", "MODIFIED.xml"))
 
-    rel1 = Relation("new_type", custom={"custom_tag": {"value": 0}}, region_refs=["tr_1651232483", "tr_1651232491"])
-    rel2 = Relation("new_type", custom={"custom_tag": {"value": 1}}, region_refs=["tr_1651232483", "tr_1651232471xxx"])
+    region_refs = ["tr1", "tr2", "tr3", "tr4"]
+    region_article_ids = ["a1", "a1", "a2", "a2"]
+    article_dict = dict()
+    for region, a_id in zip(region_refs, region_article_ids):
+        article_dict[a_id] = article_dict.get(a_id, [])
+        article_dict[a_id].append(region)
+    print(article_dict)
+    for a_id, regions in article_dict.items():
+        rel = Relation("link", region_refs=regions)
+        rel.set_article_id(a_id)
+        print(rel)
 
-    r1 = page.add_relation(rel1)
-    r2 = page.add_relation(rel2)
-
-    relations = page.get_relations(refs_only=False)
-    for relation in relations:
-        print(f"{relation.type} -- {relation.region_refs}")
-    print("##############"*10)
-
-    page.write_page_xml(path_to_xml.replace(".xml", "MODIFIED.xml"))
 
     # page.set_relations([rel1, rel2], overwrite=False)
     #
