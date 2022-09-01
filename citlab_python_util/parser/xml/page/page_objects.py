@@ -32,14 +32,35 @@ def string_to_points(s):
 class Relation:
     def __init__(self, rel_type, custom=None, regions=None, region_refs=None):
         if rel_type is None:
-            raise page_util.PageXmlException("Every Relation must have a type.")
+            raise page_util.PageXmlException("Every 'Relation' must have a type.")
+        if not page_const.RelationTypes.verify(rel_type):
+            logger.warning(f"Found unknown relation type '{rel_type}'. "
+                           f"Known types: {page_const.RelationTypes.list()}")
         self.type = rel_type
-        self.custom = custom
+        self.custom = custom or dict()
         self.regions = regions
         self.region_refs = region_refs
         # set region refs according to regions, if given
         if self.regions:
             self.region_refs = [region.id for region in self.regions]
+
+    def set_type(self, rel_type):
+        if not page_const.RelationTypes.verify(rel_type):
+            logger.warning(f"Setting unknown relation type '{rel_type}'. "
+                           f"Known types: {page_const.RelationTypes.list()}")
+        self.type = rel_type
+
+    def set_region_refs(self, region_ids):
+        self.region_refs = region_ids
+        self.regions = None
+
+    # TODO: this functionality is never needed? When setting regions, one usually only uses the ids.
+    # def set_regions(self, regions):
+    #     if not all([isinstance(region, Region) for region in regions]):
+    #         raise page_util.PageXmlException(f"A 'Relation' can only contain 'Region' objects: {Region}")
+    #     region_ids = [region.id for region in regions]
+    #     self.set_region_refs(region_ids)
+    #     self.regions = regions
 
     @property
     def id(self):
@@ -49,6 +70,12 @@ class Relation:
             logger.warning("'id' value missing in custom tag.")
             return None
 
+    def set_id(self, custom_id):
+        try:
+            self.custom["id"]["value"] = custom_id
+        except KeyError:
+            self.custom.update({"id": {"value": custom_id}})
+
     @property
     def relation_name(self):
         try:
@@ -56,6 +83,12 @@ class Relation:
         except KeyError:
             logger.warning("'relationName' value missing in custom tag.")
             return None
+
+    def set_relation_name(self, custom_name):
+        try:
+            self.custom["relationName"]["value"] = custom_name
+        except KeyError:
+            self.custom.update({"relationName": {"value": custom_name}})
 
     @property
     def relation_type(self):
@@ -65,9 +98,20 @@ class Relation:
             logger.warning("'relationType' value missing in custom tag.")
             return None
 
+    def set_relation_type(self, custom_type):
+        try:
+            self.custom["relationType"]["value"] = custom_type
+        except KeyError:
+            self.custom.update({"relationType": {"value": custom_type}})
+
     @property
     def article_id(self):
         return self.id if self.relation_name == "Article" else None
+
+    def set_article_id(self, a_id):
+        self.set_id(a_id)
+        self.set_relation_name("Article")
+        self.set_relation_type("followed by")
 
     def to_page_xml_node(self):
         relation_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sRELATION))
@@ -83,7 +127,7 @@ class Relation:
         return relation_nd
 
     def __str__(self):
-        return f"{self.type} - {self.custom}"
+        return f"{self.type} - {self.custom} - {self.region_refs}"
 
 
 class Points:

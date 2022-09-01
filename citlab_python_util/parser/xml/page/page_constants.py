@@ -59,7 +59,7 @@ class RelationTypes:
 
     @classmethod
     def verify(cls, rel_type):
-        return rel_type in (cls.sLINK, cls.sJOIN)
+        return rel_type in cls.list()
 
     @classmethod
     def list(cls):
