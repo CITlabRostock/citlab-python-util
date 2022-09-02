@@ -490,7 +490,7 @@ class Page:
         # dict with {region_id -> [article_id, article_id, ...]}
         region_article_dict = page_util.inverse_dict(article_region_dict)
         # check for ambiguous regions (that are part of multiple relations with different article ids)
-        ambiguous_regions = [(k, v) for k, v in region_article_dict.items() if len(v) > 1]
+        ambiguous_regions = [(k, v) for k, v in region_article_dict.items() if isinstance(v, list) and len(v) > 1]
         if ambiguous_regions:
             logger.warning(f"Found ambiguous regions in article relations: {ambiguous_regions}")
         return article_region_dict, region_article_dict
