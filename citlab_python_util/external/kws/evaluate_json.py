@@ -269,7 +269,7 @@ if __name__ == '__main__':
             # open corresponding PAGE file
             page_path = get_corresponding_page_path(curr_img_path)
             page = Page(page_path)
-            article_dict = page.get_article_dict()
+            article_dict = page.get_article_textline_dict()
             used_article_ids = []
 
             fig, ax = plt.subplots()
