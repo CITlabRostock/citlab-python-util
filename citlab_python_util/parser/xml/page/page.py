@@ -392,25 +392,6 @@ class Page:
             max_y = max(y_coords)
             ps_coords = [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
         return ps_coords
-        # if len(ps_nd) != 1:
-        #     logger.warning(f"Expected exactly one {page_const.sPRINT_SPACE} node, but got {len(ps_nd)}. "
-        #                    f"Fallback to entire image size")
-        #     img_width, img_height = self.get_image_resolution()
-        #     ps_coords = [(0, 0), (img_width, 0), (img_width, img_height), (0, img_height)]
-        # else:
-        #     ps_nd = ps_nd[0]
-        #     # we assume that the PrintSpace is given as a rectangle, thus having four coordinates
-        #     ps_coords = self.get_point_list(
-        #         self.get_child_by_name(ps_nd, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
-        #     for i, (x, y) in enumerate(ps_coords):
-        #         x_new = 0 if x < 0 else x
-        #         y_new = 0 if y < 0 else y
-        #         ps_coords[i] = (x_new, y_new)
-        #
-        #     if len(ps_coords) != 4:
-        #         logger.error(f"Expected exactly four rectangle coordinates, but got {len(ps_coords)}.")
-        #         exit(1)
-        # return ps_coords
 
     def get_ids(self):
         """
@@ -433,17 +414,6 @@ class Page:
                 return new_id
         return None
 
-    def get_article_dict(self):
-        article_dict = {}
-        for tl in self.textlines:
-            a_id = tl.get_article_id()
-            if a_id in article_dict:
-                article_dict[a_id].append(tl)
-            else:
-                article_dict[a_id] = [tl]
-
-        return article_dict
-
     def get_relations(self, refs_only=True):
         relations = []
         relation_nds = self.get_child_by_name(self.page_doc, page_const.sRELATION)
@@ -462,7 +432,7 @@ class Page:
                 relations.append(relation)
         return relations
 
-    def get_article_region_dict(self):
+    def get_article_region_dicts(self):
         """Returns two dictionaries containing article-region relations.
 
         The first has the article_ids as keys with all corresponding region_ids as values.
@@ -490,10 +460,24 @@ class Page:
         # dict with {region_id -> [article_id, article_id, ...]}
         region_article_dict = page_util.inverse_dict(article_region_dict)
         # check for ambiguous regions (that are part of multiple relations with different article ids)
-        ambiguous_regions = [(k, v) for k, v in region_article_dict.items() if len(v) > 1]
+        ambiguous_regions = [(k, v) for k, v in region_article_dict.items() if isinstance(v, list) and len(v) > 1]
         if ambiguous_regions:
             logger.warning(f"Found ambiguous regions in article relations: {ambiguous_regions}")
         return article_region_dict, region_article_dict
+
+    def get_article_textline_dict(self):
+        """Returns a dictionary containing article-textline relations."""
+        # get article_ids based on region relations
+        article_region_dict, region_article_dict = self.get_article_region_dicts()
+
+        # dict with {article_id -> [TextLine, TextLine, ...]}
+        article_textline_dict = dict()
+        for a_id in article_region_dict:
+            article_textline_dict[a_id] = article_textline_dict.get(a_id, [])
+            for region_id in article_region_dict[a_id]:
+                region_nd = self.get_child_by_id(self.page_doc, region_id)[0]
+                article_textline_dict[a_id].extend(self.get_textlines(region_nd))
+        return article_textline_dict
 
     def get_text_regions(self, text_region_type=None):
         text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
@@ -700,7 +684,8 @@ class Page:
             page_nd.append(region_nd)
 
     def set_text_regions(self, text_regions, overwrite=False):
-        # TODO: Define behaviour for overwrite=False
+        """Adds multiple text regions to the page document.
+        If `overwrite` is True, deletes any previous text regions."""
         if overwrite:
             current_text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
             for text_region_nd in current_text_region_nds:
@@ -923,14 +908,22 @@ if __name__ == "__main__":
     path_to_xml = flags.path_to_xml
     if path_to_xml == '':
         path_to_xml = "/home/johannes/devel/TEMP/koeln112_as_gt_test_relations/AS_GT_Koeln_Relations_validation/page/" \
-                      "0001_Koelnische_Zeitung._1803-1945 95_96 (21.2.1936)_Seite_12.xml"
+                      "0001_Koelnische_Zeitung._1803-1945_95_96_(21.2.1936)_Seite_12.xml"
 
     print(path_to_xml)
     page = Page(path_to_xml)
     transkribus_metadata: TranskribusMetadata = page.metadata.TranskribusMeta
     print("imageId = ", transkribus_metadata.imageId)
 
-    # article_region_dict, region_article_dict = page.get_article_region_dict()
+    # article_dict_old = page.get_article_dict()
+    # article_dict_new = page.get_article_textline_dict()
+    # for a_id in article_dict_old:
+    #     print(f"{a_id} -- {[tl.id for tl in article_dict_old[a_id]]}")
+    # print("#######################################"*5)
+    # for a_id in article_dict_new:
+    #     print(f"{a_id} -- {[tl.id for tl in article_dict_new[a_id]]}")
+
+    # article_region_dict, region_article_dict = page.get_article_region_dicts()
     # for key in article_region_dict:
     #     print(f"{key} --- {article_region_dict[key]}")
     # print("#######################################"*5)
@@ -965,17 +958,17 @@ if __name__ == "__main__":
     #
     # page.write_page_xml(path_to_xml.replace(".xml", "MODIFIED.xml"))
 
-    region_refs = ["tr1", "tr2", "tr3", "tr4"]
-    region_article_ids = ["a1", "a1", "a2", "a2"]
-    article_dict = dict()
-    for region, a_id in zip(region_refs, region_article_ids):
-        article_dict[a_id] = article_dict.get(a_id, [])
-        article_dict[a_id].append(region)
-    print(article_dict)
-    for a_id, regions in article_dict.items():
-        rel = Relation("link", region_refs=regions)
-        rel.set_article_id(a_id)
-        print(rel)
+    # region_refs = ["tr1", "tr2", "tr3", "tr4"]
+    # region_article_ids = ["a1", "a1", "a2", "a2"]
+    # article_dict = dict()
+    # for region, a_id in zip(region_refs, region_article_ids):
+    #     article_dict[a_id] = article_dict.get(a_id, [])
+    #     article_dict[a_id].append(region)
+    # print(article_dict)
+    # for a_id, regions in article_dict.items():
+    #     rel = Relation("link", region_refs=regions)
+    #     rel.set_article_id(a_id)
+    #     print(rel)
 
 
     # page.set_relations([rel1, rel2], overwrite=False)
