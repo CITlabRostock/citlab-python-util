@@ -62,7 +62,10 @@ class TestPage(TestCase):
     def test_set_points(self):
         self.fail()
 
-    def test_get_article_dict(self):
+    def test_get_article_textline_dict(self):
+        self.fail()
+
+    def test_get_article_region_dicts(self):
         self.fail()
 
     def test_get_image_resolution(self):

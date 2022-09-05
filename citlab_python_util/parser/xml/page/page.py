@@ -200,7 +200,8 @@ class Page:
         # return elt.findall(".//{%s}:%s"%(cls.NS_PAGE_XML,s_child_name))
         return elt.xpath(".//pc:%s" % s_child_name, namespaces={"pc": page_const.NS_PAGE_XML})
 
-    def get_ancestor_by_name(self, elt, s_name):
+    @classmethod
+    def get_ancestor_by_name(cls, elt, s_name):
         return elt.xpath("ancestor::pc:%s" % s_name, namespaces={"pc": page_const.NS_PAGE_XML})
 
     @classmethod
@@ -427,7 +428,7 @@ class Page:
                     relation = Relation(relation_nd_type, relation_nd_custom_attr, region_refs=relation_nd_region_ids)
                 else:
                     relation_nd_regions = [self.get_child_by_id(self.page_doc, id)[0] for id in relation_nd_region_ids]
-                    relation_regions = [self.get_region(nd) for nd in relation_nd_regions]
+                    relation_regions = [self.get_region_by_nd(nd) for nd in relation_nd_regions]
                     relation = Relation(relation_nd_type, relation_nd_custom_attr, regions=relation_regions)
                 relations.append(relation)
         return relations
@@ -514,7 +515,8 @@ class Page:
         for r_nd in r_nds:
             self.remove_page_xml_node(r_nd)
 
-    def get_region(self, region_nd):
+    def get_region_by_nd(self, region_nd=None):
+        """Create the corresponding region object for the given region node."""
         region_name = region_nd.tag.replace(f"{{{page_const.NS_PAGE_XML}}}", "")  # TODO: is this sufficient?
         # get general attributes
         region_id = region_nd.get("id")
@@ -534,6 +536,12 @@ class Page:
                 logger.warning(f"Unknown region type {region_name}")
                 return None
             region = region_class(region_id, region_custom_attr, region_coords)
+        return region
+
+    def get_region_by_id(self, region_id):
+        """Create the corresponding region object for the given region id."""
+        region_nd = self.get_child_by_id(self.page_doc, region_id)[0]
+        region = self.get_region_by_nd(region_nd)
         return region
 
     def get_regions(self):
@@ -614,19 +622,6 @@ class Page:
         for tl in textlines:
             tl_nd = self.get_child_by_id(self.page_doc, tl.id)[0]
             self.set_custom_attr_from_dict(tl_nd, tl.custom)
-            # for k, d in tl.custom.items():
-            #     for k1, v1 in d.items():
-            #         if v1 is None:
-            #             self.remove_custom_attr(tl_nd, k, k1)
-            #             break
-            #         else:
-            #             self.set_custom_attr(tl_nd, k, k1, v1)
-
-            # if tl.get_article_id() is None:
-            #     continue
-            # tl_nd = cls.get_child_by_id(nd, tl.id)[0]
-            # cls.set_custom_attr(tl_nd, "structure", "id", tl.get_article_id())
-            # cls.set_custom_attr(tl_nd, "structure", "type", "article")
 
     def verify_relation(self, relation):
         """Verify that regions contained in the given relation are eligible, i.e. that they
@@ -914,92 +909,3 @@ if __name__ == "__main__":
     page = Page(path_to_xml)
     transkribus_metadata: TranskribusMetadata = page.metadata.TranskribusMeta
     print("imageId = ", transkribus_metadata.imageId)
-
-    # article_dict_old = page.get_article_dict()
-    # article_dict_new = page.get_article_textline_dict()
-    # for a_id in article_dict_old:
-    #     print(f"{a_id} -- {[tl.id for tl in article_dict_old[a_id]]}")
-    # print("#######################################"*5)
-    # for a_id in article_dict_new:
-    #     print(f"{a_id} -- {[tl.id for tl in article_dict_new[a_id]]}")
-
-    # article_region_dict, region_article_dict = page.get_article_region_dicts()
-    # for key in article_region_dict:
-    #     print(f"{key} --- {article_region_dict[key]}")
-    # print("#######################################"*5)
-    # for key in region_article_dict:
-    #     print(f"{key} --- {region_article_dict[key]}")
-
-    # relations = page.get_relations(refs_only=False)
-    # for relation in relations:
-    #     print(f"{relation.type} -- {relation.region_refs}")
-    # print("##############" * 10)
-    #
-    # rel1 = Relation("new_type", custom={"custom_tag": {"value": 0}}, region_refs=["tr_1651232483", "tr_1651232491"])
-    # rel2 = Relation("new_type", custom={"custom_tag": {"value": 1}}, region_refs=["tr_1651232483", "tr_1651232471xxx"])
-    #
-    # r1 = page.add_relation(rel1)
-    # r2 = page.add_relation(rel2)
-    #
-    # relations = page.get_relations(refs_only=False)
-    # for relation in relations:
-    #     print(f"{relation.type} -- {relation.region_refs}")
-    # print("##############" * 10)
-    #
-    # rel = page.get_relations()[0]
-    # print(rel)
-    # rel.set_type("myType")
-    # page.add_relation(rel)
-    #
-    # relations = page.get_relations(refs_only=False)
-    # for relation in relations:
-    #     print(f"{relation.type} -- {relation.region_refs}")
-    # print("##############" * 10)
-    #
-    # page.write_page_xml(path_to_xml.replace(".xml", "MODIFIED.xml"))
-
-    # region_refs = ["tr1", "tr2", "tr3", "tr4"]
-    # region_article_ids = ["a1", "a1", "a2", "a2"]
-    # article_dict = dict()
-    # for region, a_id in zip(region_refs, region_article_ids):
-    #     article_dict[a_id] = article_dict.get(a_id, [])
-    #     article_dict[a_id].append(region)
-    # print(article_dict)
-    # for a_id, regions in article_dict.items():
-    #     rel = Relation("link", region_refs=regions)
-    #     rel.set_article_id(a_id)
-    #     print(rel)
-
-
-    # page.set_relations([rel1, rel2], overwrite=False)
-    #
-    # relations = page.get_relations(refs_only=False)
-    # for relation in relations:
-    #     print(f"{relation.type} -- {relation.region_refs}")
-    # print("##############"*10)
-
-    # text_region = page.get_text_regions()[1]
-    # print("TextRegion: ", text_region)
-    # page.set_text_regions([text_region], overwrite=True)
-    # new_text_region = page.get_text_regions()[0]
-    # print(new_text_region.custom)
-
-    # print(page.get_article_dict())
-
-    # textlines = page.get_textlines()
-    # for tl in textlines:
-    #     if tl.get_article_id() is not None:
-    #         tl.set_article_id(None)
-    # page.set_textline_attr(textlines)
-
-    # page.write_page_xml("./test/resources/page_xml_no_meta_copy.xml")
-
-    # textlines = page.get_textlines()
-    # # set all textline article ids to "a1"
-    # # textline attrs are changed via id -> for now adding textlines is not supported!
-    # for tl in textlines:
-    #     tl.set_article_id("a1")
-    #     # print(tl.baseline.points_list)
-    #     print(tl.surr_p.to_polygon().x_points)
-    # page.set_textline_attr(textlines)
-    # page.write_page_xml("./test/resources/page_xml_copy.xml")
