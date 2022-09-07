@@ -11,45 +11,9 @@ from citlab_python_util.geometry.polygon import Polygon
 from citlab_python_util.parser.xml.page import page_constants
 from citlab_python_util.parser.xml.page.page import Page
 from citlab_python_util.logging.custom_logging import setup_custom_logger
+from citlab_python_util.io.path_util import get_page_from_img_path
 
 logger = setup_custom_logger(__name__, level="info")
-
-# Use the default color (black) for the baselines belonging to no article
-# DEFAULT_COLOR = 'k'
-#
-# BASECOLORS = mcolors.BASE_COLORS
-# BASECOLORS.pop(DEFAULT_COLOR)
-# COLORS = dict(BASECOLORS, **mcolors.CSS4_COLORS)
-# by_hsv = sorted((tuple(mcolors.rgb_to_hsv(mcolors.to_rgba(color)[:3])), name)
-#                 for name, color in COLORS.items())
-# COLORS_SORTED = [name for hsv, name in by_hsv]
-# SEED = 501
-# random.seed(SEED)
-# random.shuffle(COLORS_SORTED)
-#
-# # black is the color for the "other" class (first entry in the "colors" list)
-# COLORS = ["darkgreen", "red", "darkviolet", "darkblue",
-#           "gold", "darkorange", "brown", "yellowgreen", "darkcyan",
-#
-#           "darkkhaki", "firebrick", "darkorchid", "deepskyblue",
-#           "peru", "orangered", "rosybrown", "burlywood", "cadetblue",
-#
-#           "olivedrab", "palevioletred", "plum", "slateblue",
-#           "tan", "coral", "sienna", "yellow", "mediumaquamarine",
-#
-#           "forestgreen", "indianred", "blueviolet", "steelblue",
-#           "silver", "salmon", "darkgoldenrod", "greenyellow", "darkturquoise",
-#
-#           "mediumseagreen", "crimson", "rebeccapurple", "navy",
-#           "darkgray", "saddlebrown", "maroon", "lawngreen", "royalblue",
-#
-#           "springgreen", "tomato", "violet", "azure",
-#           "goldenrod", "chocolate", "chartreuse", "teal"]
-#
-# for color in COLORS_SORTED:
-#     if color not in COLORS:
-#         COLORS.append(color)
-# COLORS = 5 * COLORS
 
 DEFAULT_COLOR = "#000000"
 COLORS = ["#1CE6FF", "#FF34FF", "#008941", "#006FA6", "#A30059", "#FFFF00", "#00846F",
@@ -83,8 +47,8 @@ def add_image(axes, path, height=None, width=None):
 
     :param axes: represents an individual plot
     :param path: path to the image
-    :type axes: matplotlib.pyplot.Axes
-    :type path: str
+    :param height: (optional) resize image if both height and width are given
+    :param width: (optional) resize image if both height and width are given
     :return: mpimg.AxesImage
     """
     try:
@@ -487,16 +451,9 @@ def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regio
     if not any(fname.endswith((".jpg", ".png", ".tif")) for fname in file_paths):
         raise ValueError("There are no images (jpg, png, tif) to be found, choose another folder.")
 
-    page_folder = "page"
     # Iterate over the images
     for img_path in [path for path in file_paths if path.endswith((".jpg", ".png", ".tif"))]:
-        img_name = os.path.basename(img_path)
-        img_dir = os.path.dirname(img_path)
-        page_dir = os.path.join(img_dir, page_folder)
-        if not os.path.isdir(page_dir):
-            raise ValueError("There is no 'page' subdirectory to be found, choose another folder.")
-        page_path = os.path.join(page_dir, re.sub(r"(\.)(?!.*\1).*$", ".xml", img_name))
-
+        page_path = get_page_from_img_path(img_path)
         plot_pagexml(Page(page_path), img_path, plot_article=plot_article, plot_legend=plot_legend,
                      fill_regions=fill_regions)
         plt.show()

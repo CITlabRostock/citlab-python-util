@@ -88,7 +88,7 @@ class Polygon(object):
         bounds_max_x = max(self.x_points)
         bounds_max_y = max(self.y_points)
 
-        self.bounds = Rectangle(bounds_min_x, bounds_min_y, width=bounds_max_x - bounds_min_x ,
+        self.bounds = Rectangle(bounds_min_x, bounds_min_y, width=bounds_max_x - bounds_min_x,
                                 height=bounds_max_y - bounds_min_y)
 
     def update_bounds(self, x, y):

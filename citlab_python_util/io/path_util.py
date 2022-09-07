@@ -21,7 +21,7 @@ def get_path_from_exportdir(model_dir, pattern, not_pattern):
     if len(name) == 1:
         return os.path.join(export_dir, name[0])
     else:
-        raise IOError(f"Found {len(name)} '{pattern}' files in '{export_dir}', there must be exact one.")
+        raise IOError(f"Found {len(name)} '{pattern}' files in '{export_dir}', there must be exactly one.")
 
 
 def get_img_from_page_path(page_path):
@@ -87,8 +87,8 @@ def get_page_from_img_path(image_path, page_folder_name="page"):
 
     It is assumed that the page file lies in a `page_folder_name` folder next to the image file.
 
-    :param page_folder_name: name of the folder where page file is stored in (defaults to "page")
     :param image_path: path to image file
+    :param page_folder_name: name of the folder where page file is stored in (defaults to "page")
     :return: path to matching page file
     """
     image_folder = os.path.dirname(image_path)
@@ -103,42 +103,45 @@ def get_page_from_img_path(image_path, page_folder_name="page"):
     raise IOError("No pageXML file found to given image file ", image_path)
 
 
-def get_page_from_json_path(json_path):
+def get_page_from_json_path(json_path, page_folder_name="page"):
     """
     Finds corresponding pageXML file to given json file, by matching its name and replacing the .json
     extension with an .xml extension.
 
-    It is assumed that the page file lies in a "page" folder next to the json file, which lies in a "json*" folder.
+    It is assumed that the page file lies in a `page_folder_name` folder next to the json file,
+    which lies in a "json*" folder.
 
     :param json_path: path to json file
+    :param page_folder_name: name of the folder where page file is stored in (defaults to "page")
     :return: path to matching page file
     """
     json_folder = os.path.dirname(os.path.abspath(json_path))
     json_name = os.path.splitext(os.path.basename(os.path.abspath(json_path)))[0]
     # go up the json folder and check for pageXML file
-    folder = os.path.join(json_folder, "..", "page")
+    folder = os.path.join(json_folder, "..", page_folder_name)
     page_path = os.path.join(folder, json_name + ".xml")
     if os.path.isfile(page_path):
         return page_path
     raise IOError("No pageXML file found to given (confidence) json file ", json_path)
 
 
-def get_page_from_conf_path(json_path):
+def get_page_from_conf_path(json_path, page_folder_name="page"):
     """
     Finds corresponding pageXML file to given confidence (json) file, by matching its name and replacing the .json
     extension with an .xml extension.
 
-    It is assumed that the page file lies in a "page" folder next to the confidence (json) file, which lies
+    It is assumed that the page file lies in a `page_folder_name` folder next to the confidence (json) file, which lies
     in a "confidences" folder.
 
     :param json_path: path to confidence (json) file
+    :param page_folder_name: name of the folder where page file is stored in (defaults to "page")
     :return: path to matching page file
     """
     conf_folder = os.path.dirname(os.path.abspath(json_path))
     conf_name = os.path.splitext(os.path.basename(os.path.abspath(json_path)))[0]
     page_name = re.sub(r'(.+)_confidences$', r'\1', conf_name)
     # go up the confidences folder and check for pageXML file
-    folder = os.path.join(conf_folder, "..")
+    folder = os.path.join(conf_folder, "..", page_folder_name)
     page_path = os.path.join(folder, page_name + ".xml")
     if os.path.isfile(page_path):
         return page_path
