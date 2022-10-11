@@ -416,6 +416,8 @@ class Page:
         return None
 
     def get_relations(self, refs_only=True):
+        """Returns a list of all region relations. These are either 'Relation' objects or just references to the
+        region ids (if `refs_only' is True)."""
         relations = []
         relation_nds = self.get_child_by_name(self.page_doc, page_const.sRELATION)
         if len(relation_nds) > 0:
@@ -480,11 +482,17 @@ class Page:
                 article_textline_dict[a_id].extend(self.get_textlines(region_nd))
         return article_textline_dict
 
-    def get_text_regions(self, text_region_type=None):
+    def get_text_regions(self, text_region_type=None, refs_only=False):
+        """Returns a list of all text regions. These are either 'TextRegion' objects or just references to the
+        text region ids (if `refs_only' is True)."""
         text_region_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTREGION)
-        res = []
+        text_regions = []
         if len(text_region_nds) > 0:
             for text_region in text_region_nds:
+                if refs_only:
+                    text_region_id = text_region.get("id")
+                    text_regions.append(text_region_id)
+                    continue
                 text_region_nd_type = text_region.get('type')
                 tr_type = text_region_nd_type if text_region_nd_type is not None else page_const.TextRegionTypes.sPARAGRAPH
                 if text_region_type is not None and tr_type != text_region_type:
@@ -495,11 +503,10 @@ class Page:
                     self.get_child_by_name(text_region, page_const.sCOORDS)[0].get(page_const.sPOINTS_ATTR))
                 text_region_text_lines = self.get_textlines(text_region)
 
-                tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords, text_region_text_lines,
-                                tr_type)
-                res.append(tr)
-
-        return res
+                tr = TextRegion(text_region_id, text_region_custom_attr, text_region_coords,
+                                text_region_text_lines, tr_type)
+                text_regions.append(tr)
+        return text_regions
 
     def remove_regions(self, region_type):
         if region_type not in REGIONS_DICT:
@@ -614,7 +621,6 @@ class Page:
 
     def set_textline_attr(self, textlines):
         """
-
         :param textlines: list of TextLine objects
         :type textlines: list of TextLine
         :return: None
@@ -637,14 +643,28 @@ class Page:
             logger.warning("Trying to add a non-eligible relation to the page document. "
                            "Make sure that the referenced regions actually exist!")
             return
-        relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
+        try:
+            relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
+        except IndexError:
+            # create (missing) Relations node
+            page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
+            relations_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sRELATIONS))
+            page_nd.insert(1, relations_nd)
+
         relation_nd = relation.to_page_xml_node()
         if relation_nd is not None:
             relations_nd.append(relation_nd)
 
     def set_relations(self, relations, overwrite=False):
         """Adds multiple relations to the page document. If `overwrite` is True, deletes any previous relations."""
-        relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
+        try:
+            relations_nd = self.get_child_by_name(self.page_doc, page_const.sRELATIONS)[0]
+        except IndexError:
+            # create (missing) Relations node
+            page_nd = self.get_child_by_name(self.page_doc, "Page")[0]
+            relations_nd = etree.Element('{%s}%s' % (page_const.NS_PAGE_XML, page_const.sRELATIONS))
+            page_nd.insert(1, relations_nd)
+
         if overwrite:
             current_relation_nds = self.get_child_by_name(relations_nd, page_const.sRELATION)
             for relation_nd in current_relation_nds:
