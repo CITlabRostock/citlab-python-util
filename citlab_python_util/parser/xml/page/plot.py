@@ -351,10 +351,10 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=Fals
         raise IOError(f"No valid hypothesis list found: '{hyp_lst}'.")
     if not hyp_lst.endswith((".lst", ".txt")) and not os.path.isfile(hyp_lst):
         raise IOError(f"Hypothesis list doesn't have a valid extension or doesn't exist: '{hyp_lst}'.")
-    if not gt_lst:
-        raise IOError(f"No valid groundtruth list found: '{gt_lst}'")
-    elif not gt_lst.endswith((".lst", ".txt")) and not os.path.isfile(gt_lst):
-        raise IOError(f"Groundtruth list doesn't have a valid extension or doesn't exist: '{gt_lst}'.")
+    # if not gt_lst:
+    #     raise IOError(f"No valid groundtruth list found: '{gt_lst}'")
+    # elif not gt_lst.endswith((".lst", ".txt")) and not os.path.isfile(gt_lst):
+    #     raise IOError(f"Groundtruth list doesn't have a valid extension or doesn't exist: '{gt_lst}'.")
 
     if gt_lst is not None:
         with open(img_lst, 'r') as img_paths:
@@ -437,7 +437,12 @@ def plot_list(img_lst, hyp_lst, gt_lst=None, plot_article=True, plot_legend=Fals
 
                     plot_pagexml(hyp_path, img_path, ax, plot_article, plot_legend, fill_regions,
                                  use_page_image_resolution)
-
+                    # save_path = "/home/johannes/devel/projects/tf_rel/debug_output/DEL_PICS/Koeln112_alpha_gt_BERTnew_merge/"
+                    # save_path += os.path.splitext(os.path.basename(hyp_path))[0] + ".jpg"
+                    # plt.axis('off')
+                    # plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=300)
+                    # print(f"Saved figure {save_path}")
+                    # plt.close(fig)
                     plt.show()
 
 
@@ -462,22 +467,21 @@ def plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regio
 if __name__ == '__main__':
     # Example for plotting folder
     # path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_BNF_183_updated_gt"
-    # path_to_folder = "/home/johannes/devel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt"
     # plot_folder(path_to_folder, plot_article=True, plot_legend=False, fill_regions=False)
 
     # Example for plotting list (GT list can be omitted)
-    # path_to_img_lst = "./test/resources/newseye_as_test_data/image_paths.lst"
-    # path_to_hyp_lst = "./test/resources/newseye_as_test_data/hy_xml_paths.lst"
+    path_to_img_lst = "/home/johannes/devel/projects/tf_rel/lists/koeln112/koeln_112_images.lst"
+    path_to_hyp_lst = "/home/johannes/devel/projects/tf_rel/lists/koeln112/koeln112_alpha_gt_3bbBERTnew_cluster_merge.lst"
+    path_to_gt_lst = None
     # path_to_gt_lst = "./test/resources/newseye_as_test_data/gt_xml_paths.lst"
-    # plot_list(path_to_img_lst, path_to_hyp_lst, path_to_gt_lst, plot_article=True, force_equal_names=True)
+    plot_list(path_to_img_lst, path_to_hyp_lst, path_to_gt_lst, plot_article=True, force_equal_names=False,
+              use_page_image_resolution=True)
 
     # # Example for plotting PAGE file
-    path_to_xml = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312029/ONB_aze_18950706/page/ONB_aze_18950706_1.xml"
-    path_to_img = "/home/johannes/devel/projects/tf_rel/data/NewsEye_GT/AS_BC/NewsEye_ONB_230_updated_gt/312029/ONB_aze_18950706/ONB_aze_18950706_1.jpg"
     # path_to_xml = "/home/johannes/devel/19200115_1-0001_clustering.xml"
     # path_to_img = "/home/johannes/devel/19200115_1-0001.jpg"
-    plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
+    # plot_pagexml(Page(path_to_xml), path_to_img, plot_article=True, plot_legend=False)
     # save_path = "/home/johannes/devel/nlf.png"
     # plt.axis('off')
     # plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=300)
-    plt.show()
+    # plt.show()
