@@ -468,8 +468,9 @@ class Page:
             logger.warning(f"Found ambiguous regions in article relations: {ambiguous_regions}")
         return article_region_dict, region_article_dict
 
-    def get_article_textline_dict(self):
-        """Returns a dictionary containing article-textline relations."""
+    def get_article_textline_dict(self, inverse=False):
+        """Returns a dictionary containing article-textline relations,
+        or textline-article relations if `inverse` is True"""
         # get article_ids based on region relations
         article_region_dict, region_article_dict = self.get_article_region_dicts()
 
@@ -479,8 +480,11 @@ class Page:
             article_textline_dict[a_id] = article_textline_dict.get(a_id, [])
             for region_id in article_region_dict[a_id]:
                 region_nd = self.get_child_by_id(self.page_doc, region_id)[0]
-                article_textline_dict[a_id].extend(self.get_textlines(region_nd))
-        return article_textline_dict
+                article_textline_dict[a_id].extend(self.get_textlines(region_nd, refs_only=True))
+        if inverse:
+            return page_util.inverse_dict(article_textline_dict)
+        else:
+            return article_textline_dict
 
     def get_text_regions(self, text_region_type=None, refs_only=False):
         """Returns a list of all text regions. These are either 'TextRegion' objects or just references to the
@@ -490,8 +494,7 @@ class Page:
         if len(text_region_nds) > 0:
             for text_region in text_region_nds:
                 if refs_only:
-                    text_region_id = text_region.get("id")
-                    text_regions.append(text_region_id)
+                    text_regions.append(text_region.get("id"))
                     continue
                 text_region_nd_type = text_region.get('type')
                 tr_type = text_region_nd_type if text_region_nd_type is not None else page_const.TextRegionTypes.sPARAGRAPH
@@ -569,32 +572,32 @@ class Page:
                                for reg in r_nds]
         return res
 
-    def get_textlines(self, text_region_nd=None, ignore_redundant_textlines=True):
+    def get_textlines(self, text_region_nd=None, ignore_redundant_textlines=True, refs_only=False, ):
         if text_region_nd is not None:
-            tl_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
+            textline_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
         else:
-            tl_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTLINE)
+            textline_nds = self.get_child_by_name(self.page_doc, page_const.sTEXTLINE)
 
-        res = []
+        textlines = []
         tl_id_set = set()
-        for tl in tl_nds:
-            tl_id = tl.get("id")
-            if tl_id in tl_id_set and ignore_redundant_textlines:
-                continue
-            tl_id_set.add(tl_id)
-            tl_custom_attr = self.parse_custom_attr(tl.get(page_const.sCUSTOM_ATTR))
-            tl_text = self.get_text_equiv(tl)
-            tl_bl_nd = self.get_child_by_name(tl, page_const.sBASELINE)
-            tl_bl = self.get_point_list(tl_bl_nd[0]) if tl_bl_nd else None
-            tl_surr_p = self.get_point_list(tl)
-            words = self.get_words(tl)
-            res.append(TextLine(tl_id, tl_custom_attr, tl_text, tl_bl, tl_surr_p, words))
-
-        # return [TextLine(tl.get("id"), self.parse_custom_attr(tl.get(self.sCUSTOM_ATTR)), self.get_text_equiv(tl),
-        #                  self.get_point_list(self.get_child_by_name(tl, self.sBASELINE)[0]), self.get_point_list(tl))
-        #         for tl in tl_nds]
-
-        return res
+        if len(textline_nds) > 0:
+            for tl in textline_nds:
+                tl_id = tl.get("id")
+                if tl_id in tl_id_set and ignore_redundant_textlines:
+                    continue
+                if refs_only:
+                    textlines.append(tl_id)
+                    continue
+                tl_id_set.add(tl_id)
+                tl_custom_attr = self.parse_custom_attr(tl.get(page_const.sCUSTOM_ATTR))
+                tl_text = self.get_text_equiv(tl)
+                tl_bl_nd = self.get_child_by_name(tl, page_const.sBASELINE)
+                tl_bl = self.get_point_list(tl_bl_nd[0]) if tl_bl_nd else None
+                tl_surr_p = self.get_point_list(tl)
+                words = self.get_words(tl)
+                tl = TextLine(tl_id, tl_custom_attr, tl_text, tl_bl, tl_surr_p, words)
+                textlines.append(tl)
+        return textlines
 
     def get_words(self, text_line_nd=None, ignore_redundant_words=True):
         if text_line_nd is not None:
