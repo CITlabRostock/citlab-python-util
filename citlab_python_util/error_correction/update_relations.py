@@ -73,8 +73,15 @@ def update_article_relations(page_paths, overwrite=False):
         overall_ambiguous += num_ambiguous
         logger.debug(f"\t{num_ambiguous}/{len(text_regions)} text regions contained textlines of differing article_ids")
 
+        # format article ids
+        final_article_ids = []
+        for a_id in tr_article_ids:
+            if a_id[0] == "a" and a_id[1] != "_":
+                a_id = "a_" + a_id[1:]
+            final_article_ids.append(a_id)
+
         # build and overwrite (article) relations
-        relations = build_relations(tr_article_ids, [tr.id for tr in text_regions])
+        relations = build_relations(final_article_ids, [tr.id for tr in text_regions])
         page.set_relations(relations, overwrite=True)
         if overwrite:
             page.write_page_xml(page_path)
