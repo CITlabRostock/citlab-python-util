@@ -106,8 +106,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--xml_list', type=str, help="lst file containing pageXML paths (exclusive with --xml_dir)")
     parser.add_argument('--xml_dir', type=str, help="directory containing pageXML paths (exclusive with --xml_list)")
-    parser.add_argument('--overwrite', default=False, type=bool,
-                        help="Whether to overwrite the given pageXML files or save new files with updated relations.")
+    parser.add_argument('--overwrite', dest='overwrite', default=False, action='store_true')
     args = parser.parse_args()
 
     # XML variants
