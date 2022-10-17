@@ -1,5 +1,4 @@
 import os
-import glob
 import numpy as np
 from pathlib import Path
 from argparse import ArgumentParser
@@ -7,18 +6,6 @@ from citlab_python_util.parser.xml.page.page import Page, Relation
 from citlab_python_util.logging.custom_logging import setup_custom_logger
 
 logger = setup_custom_logger(__name__, level="debug")
-
-
-def find_dirs(name, root='.', exclude=None):
-    results = []
-    for path, dirs, files in os.walk(root):
-        if name in dirs:
-            # return os.path.join(path, name)
-            results.append(os.path.join(path, name))
-    if exclude:
-        for ex in exclude.split(","):
-            results = [res for res in results if ex not in res]
-    return results
 
 
 def find_paths(root=".", ending="xml", exclude=None):
@@ -98,7 +85,7 @@ def update_article_relations(page_paths, overwrite=False):
         else:
             page_path = Path(page_path).parent / (Path(page_path).stem + "_relations.xml")
             page.write_page_xml(page_path)
-        logger.info(f"\tWrote update relations to {page_path}")
+        logger.info(f"\tWrote updated relations to {page_path}")
     logger.info(f"Overall there were {overall_ambiguous} text regions containing textlines of differing article_ids")
 
 
@@ -106,8 +93,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--xml_list', type=str, help="lst file containing pageXML paths (exclusive with --xml_dir)")
     parser.add_argument('--xml_dir', type=str, help="directory containing pageXML paths (exclusive with --xml_list)")
-    parser.add_argument('--overwrite', default=False, type=bool,
-                        help="Whether to overwrite the given pageXML files or save new files with updated relations.")
+    parser.add_argument('--overwrite', dest='overwrite', default=False, action='store_true',
+                        help="Whether to overwrite the pageXML files or save new ones.")
     args = parser.parse_args()
 
     # XML variants
