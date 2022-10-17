@@ -21,6 +21,16 @@ def find_dirs(name, root='.', exclude=None):
     return results
 
 
+def find_paths(root=".", ending="xml", exclude=None):
+    results = []
+    for path in Path(root).rglob(f'*.{ending}'):
+        results.append(str(path))
+    if exclude:
+        for ex in exclude.split(","):
+            results = [res for res in results if ex not in res]
+    return results
+
+
 def build_relations(article_ids, text_region_ids):
     # gather regions belonging to same cluster in dict
     article_region_pairs = zip(article_ids, text_region_ids)
@@ -108,9 +118,10 @@ if __name__ == '__main__':
         logger.error(f"Either --xml_list or --xml_dir is needed!")
         exit(1)
     if args.xml_dir:
-        xml_path = find_dirs("page", root=args.xml_dir)[0]
-        xml_paths = [os.path.join(xml_path, file_path) for file_path in glob.glob1(xml_path, '*.xml')]
-        logger.info(f"Using XML directory '{xml_path}'")
+        # xml_path = find_dirs("page", root=args.xml_dir)[0]
+        # xml_paths = [os.path.join(xml_path, file_path) for file_path in glob.glob1(xml_path, '*.xml')]
+        xml_paths = find_paths(root=args.xml_dir)
+        logger.info(f"Using XML directory '{set([str(Path(path).parent) for path in xml_paths])}'")
     else:  # args.xml_list
         xml_paths = [path.rstrip() for path in open(args.xml_list, "r")]
         logger.info(f"Using XML list '{args.xml_list}'")
