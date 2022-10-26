@@ -105,8 +105,6 @@ if __name__ == '__main__':
         logger.error(f"Either --xml_list or --xml_dir is needed!")
         exit(1)
     if args.xml_dir:
-        # xml_path = find_dirs("page", root=args.xml_dir)[0]
-        # xml_paths = [os.path.join(xml_path, file_path) for file_path in glob.glob1(xml_path, '*.xml')]
         xml_paths = find_paths(root=args.xml_dir)
         logger.info(f"Using XML directory '{set([str(Path(path).parent) for path in xml_paths])}'")
     else:  # args.xml_list
