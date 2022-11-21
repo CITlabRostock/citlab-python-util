@@ -468,9 +468,10 @@ class Page:
             logger.warning(f"Found ambiguous regions in article relations: {ambiguous_regions}")
         return article_region_dict, region_article_dict
 
-    def get_article_textline_dict(self, inverse=False):
+    def get_article_textline_dict(self, inverse=False, refs_only=True):
         """Returns a dictionary containing article-textline relations,
-        or textline-article relations if `inverse` is True"""
+        or textline-article relations if `inverse` is True. Also able to choose between references only
+        (i.e. TextLine IDs) or TextLine objects."""
         # get article_ids based on region relations
         article_region_dict, region_article_dict = self.get_article_region_dicts()
 
@@ -480,7 +481,7 @@ class Page:
             article_textline_dict[a_id] = article_textline_dict.get(a_id, [])
             for region_id in article_region_dict[a_id]:
                 region_nd = self.get_child_by_id(self.page_doc, region_id)[0]
-                article_textline_dict[a_id].extend(self.get_textlines(region_nd, refs_only=True))
+                article_textline_dict[a_id].extend(self.get_textlines(region_nd, refs_only=refs_only))
         if inverse:
             return page_util.inverse_dict(article_textline_dict)
         else:
@@ -572,7 +573,7 @@ class Page:
                                for reg in r_nds]
         return res
 
-    def get_textlines(self, text_region_nd=None, ignore_redundant_textlines=True, refs_only=False, ):
+    def get_textlines(self, text_region_nd=None, ignore_redundant_textlines=True, refs_only=False):
         if text_region_nd is not None:
             textline_nds = self.get_child_by_name(text_region_nd, page_const.sTEXTLINE)
         else:
