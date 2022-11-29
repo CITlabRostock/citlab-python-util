@@ -266,7 +266,7 @@ def plot_pagexml(page, path_to_img, ax=None, plot_article=True, plot_legend=Fals
     assert type(page) == Page, f"Type must be Page, got {type(page)} instead."
 
     # get baselines based on the article id
-    article_dict = page.get_article_textline_dict()
+    article_dict = page.get_article_textline_dict(refs_only=False)
     if not article_dict:
         bcolors = []
         blines_list = []
